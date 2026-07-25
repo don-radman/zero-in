@@ -29,3 +29,19 @@ body {
   background: white;
   animation: twinkle 4s ease-in-out infinite;
 }
+
+@keyframes shoot {
+  0% { transform: translate(0, 0) rotate(-35deg); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate(240px, 160px) rotate(-35deg); opacity: 0; }
+}
+
+.shooting-star {
+  position: absolute;
+  width: 46px;
+  height: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff);
+  animation: shoot 1.3s ease-in forwards;
+  pointer-events: none;
+}

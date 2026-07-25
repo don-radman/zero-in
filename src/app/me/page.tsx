@@ -10,6 +10,7 @@ import SuggestionCards from "@/components/SuggestionCards";
 import DebriefPrompt from "@/components/DebriefPrompt";
 import TeachPanda from "@/components/TeachPanda";
 import SocialsEditor from "@/components/SocialsEditor";
+import PulseCard from "@/components/PulseCard";
 
 function useAuthToken() {
   if (devMode()) {
@@ -95,6 +96,18 @@ export default function MePage() {
         )}
       </div>
 
+      {(() => {
+        const pending = patches.find((p: any) => !p.pulse);
+        return pending ? (
+          <PulseCard
+            eventId={pending.event_id}
+            eventName={pending.events?.name || "this event"}
+            startGravity={agent.gravity}
+            getToken={auth.get}
+            onDone={() => load().catch(() => {})}
+          />
+        ) : null;
+      })()}
       <DebriefPrompt getToken={auth.get} onDone={() => load().catch(() => {})} />
       <SuggestionCards getToken={auth.get} />
 

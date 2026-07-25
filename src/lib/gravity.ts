@@ -6,6 +6,7 @@ export const GRAVITY = {
   patchClaimFlagship: 30,
   introAccepted: 10, // each side
   debriefCompleted: 10,
+  pulseShared: 10, // one-time optional pulse per patch
   intentRegistered: 2,
 } as const;
 

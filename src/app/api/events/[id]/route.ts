@@ -6,7 +6,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const { data: event } = await db()
     .from("events")
-    .select("id, name, starts_at, ends_at, cap, ask_the_room, trust_tier, flagship")
+    .select("id, name, starts_at, ends_at, cap, ask_the_room, trust_tier, flagship, patch_art_url")
     .eq("id", id)
     .maybeSingle();
   if (!event) return NextResponse.json({ error: "no such event" }, { status: 404 });

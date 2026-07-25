@@ -143,6 +143,14 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
       <div className="flex flex-col items-center gap-5 py-12 text-center">
         <p className="text-sm uppercase tracking-widest text-[#18B8A6]">Patch secured</p>
         <h1 className="text-3xl font-bold">{result.eventName}</h1>
+        {event?.event?.patch_art_url && (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={event.event.patch_art_url}
+            alt="Your patch"
+            className="w-48 rounded-xl border border-[#18B8A6]/40"
+          />
+        )}
         <div className="rounded-3xl border border-[#18B8A6]/40 bg-[#18B8A6]/10 px-10 py-8">
           <p className="text-5xl font-black">#{result.edition}</p>
           {result.cap > 0 && <p className="mt-1 text-sm opacity-60">of {result.cap}</p>}
@@ -272,6 +280,14 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
     <div className="flex flex-col items-center gap-6 py-16 text-center">
       <p className="text-sm uppercase tracking-widest text-[#7C5CFF]">Zero in</p>
       <h1 className="text-3xl font-bold">{event?.event?.name}</h1>
+      {event?.event?.patch_art_url && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={event.event.patch_art_url}
+          alt={`${event.event.name} patch`}
+          className="w-64 rounded-2xl border border-white/15 shadow-[0_0_30px_rgba(124,92,255,0.25)]"
+        />
+      )}
       <p className="opacity-60">
         {event?.claimed} {event?.claimed === 1 ? "person has" : "people have"} zeroed in
         {event?.event?.cap ? ` (cap ${event.event.cap})` : ""}

@@ -57,6 +57,29 @@ export default function HostDashboard({ eventId }: { eventId: string }) {
         </div>
       </div>
 
+      {stats.pulse?.shared > 0 && (
+        <section className="mt-8 rounded-2xl border border-white/10 p-4">
+          <h2 className="font-bold">Event pulse</h2>
+          <p className="mt-1 text-xs opacity-50">{stats.pulse.shared} shared · {stats.pulse.connectionsYes} already made new connections</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {Object.entries(stats.pulse.vibes)
+              .sort((a: any, b: any) => b[1] - a[1])
+              .map(([v, n]: any) => (
+                <span key={v} className="rounded-full bg-[#18B8A6]/15 px-3 py-1 text-sm">
+                  {v} <span className="opacity-50">x{n}</span>
+                </span>
+              ))}
+          </div>
+          {stats.pulse.improvements.length > 0 && (
+            <ul className="mt-3 flex flex-col gap-1 text-sm opacity-80">
+              {stats.pulse.improvements.slice(0, 8).map((s: string, i: number) => (
+                <li key={i}>- {s}</li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
+
       <section className="mt-8 rounded-2xl border border-white/10 p-4">
         <h2 className="font-bold">Ask the Room</h2>
         {stats.askTheRoom.question ? (

@@ -16,7 +16,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ eventId
 
     const { data: patches } = await client
       .from("patches")
-      .select("user_id, edition, emoji_pulse, debrief_done, claimed_at")
+      .select("user_id, edition, emoji_pulse, debrief_done, claimed_at, pulse")
       .eq("event_id", eventId);
     const cohort = patches || [];
     const userIds = cohort.map((p) => p.user_id);
@@ -41,6 +41,19 @@ export async function GET(_req: Request, { params }: { params: Promise<{ eventId
 
     const emojis: Record<string, number> = {};
     for (const p of cohort) if (p.emoji_pulse) emojis[p.emoji_pulse] = (emojis[p.emoji_pulse] || 0) + 1;
+
+    // Pulse aggregates (vibes histogram, connections rate, improvement list)
+    const pulses = cohort.map((p: any) => p.pulse).filter(Boolean);
+    const vibeCounts: Record<string, number> = {};
+    let connectionsYes = 0;
+    const improvements: string[] = [];
+    for (const p of pulses) {
+      for (const v of [...(p.vibes || []), p.vibeOther].filter(Boolean)) {
+        vibeCounts[v] = (vibeCounts[v] || 0) + 1;
+      }
+      if (p.madeConnections) connectionsYes++;
+      if (p.improvement) improvements.push(p.improvement);
+    }
 
     // Ask-the-Room synthesis (0G Compute), only above the privacy floor
     let askTheRoom: { question: string | null; summary: string | null; answers: number } = {
@@ -82,6 +95,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ eventId
       intros,
       debriefsDone: cohort.filter((p) => p.debrief_done).length,
       emojis,
+      pulse: {
+        shared: pulses.length,
+        vibes: vibeCounts,
+        connectionsYes,
+        // free text stays behind the privacy floor
+        improvements: pulses.length >= MIN_COHORT ? improvements : [],
+      },
       askTheRoom,
       minCohort: MIN_COHORT,
     });
