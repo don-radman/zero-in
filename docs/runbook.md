@@ -1,8 +1,10 @@
 # Runbook
 
-## LIVE (Saturday midday)
+## LIVE (Saturday evening)
 
-- **Production:** https://zero-in-three.vercel.app (GitHub pushes to main auto-deploy)
+- **Production:** https://zeroin.space (bought via Vercel $1.99/yr, registrar +
+  DNS both Vercel, expires Jul 2027; https://zero-in-three.vercel.app stays as
+  alias; GitHub pushes to main auto-deploy)
 - **ETHGlobal Lisbon 2026 event** (on-chain id 2, cap 200, flagship, patch art attached):
   - NFC claim URL: `https://zero-in-three.vercel.app/z/71dcf6ab-86ad-4e52-bd09-6a78471ad9f7?k=gx0GW4WNf9aaM6Lc`
   - Rotating QR screen: `https://zero-in-three.vercel.app/host/71dcf6ab-86ad-4e52-bd09-6a78471ad9f7/screen`
