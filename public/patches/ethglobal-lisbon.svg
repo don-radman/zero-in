@@ -1,0 +1,68 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <!-- azulejo tile band: blue diamonds + corner dots on white -->
+    <pattern id="az" width="24" height="24" patternUnits="userSpaceOnUse">
+      <rect width="24" height="24" fill="#FFFFFF"/>
+      <path d="M12 3 L21 12 L12 21 L3 12 Z" fill="#2B6CB0"/>
+      <path d="M12 7.5 L16.5 12 L12 16.5 L7.5 12 Z" fill="#FFFFFF" opacity="0.85"/>
+      <circle cx="2" cy="2" r="1.7" fill="#2B6CB0"/>
+      <circle cx="22" cy="2" r="1.7" fill="#2B6CB0"/>
+      <circle cx="2" cy="22" r="1.7" fill="#2B6CB0"/>
+      <circle cx="22" cy="22" r="1.7" fill="#2B6CB0"/>
+    </pattern>
+    <clipPath id="scene">
+      <circle cx="256" cy="256" r="194"/>
+    </clipPath>
+    <path id="arcTop" d="M 22 256 A 234 234 0 0 1 490 256" fill="none"/>
+    <path id="arcBottom" d="M 38 256 A 218 218 0 0 0 474 256" fill="none"/>
+  </defs>
+
+  <!-- patch rings -->
+  <circle cx="256" cy="256" r="250" fill="#1F4E8C" stroke="#14355F" stroke-width="4"/>
+  <circle cx="256" cy="256" r="222" fill="url(#az)"/>
+  <circle cx="256" cy="256" r="198" fill="#FDF6E3" stroke="#14355F" stroke-width="3"/>
+
+  <!-- center scene -->
+  <g clip-path="url(#scene)">
+    <rect x="62" y="62" width="388" height="270" fill="#BFE3F2"/>
+    <rect x="62" y="330" width="388" height="120" fill="#D8CFC0"/>
+    <circle cx="360" cy="130" r="26" fill="#F7C531" opacity="0.9"/>
+    <!-- hills -->
+    <path d="M62 300 Q140 250 220 296 T450 290 L450 336 L62 336 Z" fill="#E9DFCE"/>
+
+    <!-- overhead wire + trolley pole -->
+    <line x1="90" y1="150" x2="422" y2="150" stroke="#5b5f6b" stroke-width="3"/>
+    <line x1="256" y1="240" x2="298" y2="154" stroke="#2b2d33" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="300" cy="152" r="6" fill="#2b2d33"/>
+
+    <!-- the tram (Remodelado, side view) -->
+    <rect x="146" y="238" width="220" height="98" rx="14" fill="#F7C531" stroke="#2b2d33" stroke-width="5"/>
+    <rect x="146" y="238" width="220" height="24" rx="12" fill="#FBF4D5" stroke="#2b2d33" stroke-width="3"/>
+    <rect x="164" y="270" width="42" height="34" rx="4" fill="#9CD4E8" stroke="#2b2d33" stroke-width="3"/>
+    <rect x="222" y="270" width="42" height="34" rx="4" fill="#9CD4E8" stroke="#2b2d33" stroke-width="3"/>
+    <rect x="280" y="270" width="42" height="34" rx="4" fill="#9CD4E8" stroke="#2b2d33" stroke-width="3"/>
+    <rect x="330" y="270" width="24" height="60" rx="4" fill="#9CD4E8" stroke="#2b2d33" stroke-width="3"/>
+    <rect x="150" y="308" width="212" height="6" fill="#C93B3B"/>
+    <!-- route plate: the 28 -->
+    <rect x="240" y="316" width="34" height="20" rx="4" fill="#FFFFFF" stroke="#2b2d33" stroke-width="2.5"/>
+    <text x="257" y="331" text-anchor="middle" font-family="Arial, sans-serif" font-size="15" font-weight="700" fill="#2b2d33">28</text>
+    <!-- wheels + track -->
+    <circle cx="196" cy="340" r="15" fill="#2b2d33"/>
+    <circle cx="196" cy="340" r="6" fill="#8A93A6"/>
+    <circle cx="316" cy="340" r="15" fill="#2b2d33"/>
+    <circle cx="316" cy="340" r="6" fill="#8A93A6"/>
+    <line x1="80" y1="358" x2="432" y2="358" stroke="#5b5f6b" stroke-width="4"/>
+    <ellipse cx="140" cy="372" rx="10" ry="4" fill="#C9BFAE"/>
+    <ellipse cx="230" cy="380" rx="10" ry="4" fill="#C9BFAE"/>
+    <ellipse cx="330" cy="374" rx="10" ry="4" fill="#C9BFAE"/>
+    <ellipse cx="400" cy="382" rx="10" ry="4" fill="#C9BFAE"/>
+  </g>
+
+  <!-- ring text -->
+  <text font-family="Arial, sans-serif" font-size="30" font-weight="800" fill="#FFFFFF" letter-spacing="6">
+    <textPath href="#arcTop" startOffset="50%" text-anchor="middle">ETHGLOBAL LISBON 2026</textPath>
+  </text>
+  <text font-family="Arial, sans-serif" font-size="21" font-weight="700" fill="#FFFFFF" letter-spacing="4">
+    <textPath href="#arcBottom" startOffset="50%" text-anchor="middle">ZERO DEGREES OF SEPARATION</textPath>
+  </text>
+</svg>

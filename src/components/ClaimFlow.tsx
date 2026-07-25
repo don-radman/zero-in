@@ -1,12 +1,21 @@
 "use client";
 // The venue moment: land from NFC/QR, claim the patch, watch gravity move.
-// Target: under 10 seconds end to end for a returning member.
+// After the patch is secured, the intent card captures "what are you looking
+// for HERE", logistics, the issuer's Ask-the-Room question, and the per-event
+// intros opt-in. Target: claim itself stays under 10 seconds.
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { authedFetch, devMode, getDevEmail } from "@/lib/clientAuth";
 
 const EMOJI = ["🔥", "🤝", "🧠", "😴", "🚀"];
+const HEADS_OUT = [
+  ["", "Not sure yet"],
+  ["saturday", "Tonight"],
+  ["sunday", "Sunday"],
+  ["monday", "Monday"],
+  ["later", "Sticking around"],
+] as const;
 
 type Phase = "loading" | "ready" | "claiming" | "done" | "error";
 
@@ -29,6 +38,13 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [emoji, setEmoji] = useState<string | null>(null);
+
+  // Intent card state (post-claim)
+  const [lookingFor, setLookingFor] = useState("");
+  const [headsOut, setHeadsOut] = useState("");
+  const [askRoomAnswer, setAskRoomAnswer] = useState("");
+  const [introsEnabled, setIntrosEnabled] = useState(true);
+  const [intentState, setIntentState] = useState<"open" | "saving" | "saved" | "skipped">("open");
 
   useEffect(() => {
     fetch(`/api/events/${eventId}`)
@@ -76,6 +92,30 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
     }
   }
 
+  async function saveIntent() {
+    setIntentState("saving");
+    try {
+      const t = await token.get();
+      await authedFetch(
+        "/api/intent",
+        {
+          method: "POST",
+          body: JSON.stringify({
+            eventId,
+            lookingFor: lookingFor.trim() || undefined,
+            logistics: headsOut ? { flies_out: headsOut } : {},
+            askRoomAnswer: askRoomAnswer.trim() || undefined,
+            introsEnabled,
+          }),
+        },
+        t
+      );
+      setIntentState("saved");
+    } catch {
+      setIntentState("open");
+    }
+  }
+
   if (phase === "loading") return <p className="py-24 text-center opacity-60">Finding the event...</p>;
 
   if (phase === "error") {
@@ -91,7 +131,7 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
 
   if (phase === "done" && result) {
     return (
-      <div className="flex flex-col items-center gap-5 py-16 text-center">
+      <div className="flex flex-col items-center gap-5 py-12 text-center">
         <p className="text-sm uppercase tracking-widest text-[#18B8A6]">Patch secured</p>
         <h1 className="text-3xl font-bold">{result.eventName}</h1>
         <div className="rounded-3xl border border-[#18B8A6]/40 bg-[#18B8A6]/10 px-10 py-8">
@@ -106,12 +146,90 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
             sewn on-chain (view transaction)
           </a>
         )}
-        <button
-          onClick={() => router.push("/me")}
-          className="mt-2 rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90"
-        >
-          See your suit
-        </button>
+
+        {intentState === "saved" || intentState === "skipped" ? (
+          <>
+            {intentState === "saved" && introsEnabled && (
+              <p className="text-sm opacity-70">Your panda is on the hunt. Check your suit for intros.</p>
+            )}
+            <button
+              onClick={() => router.push("/me")}
+              className="mt-2 rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90"
+            >
+              See your suit
+            </button>
+          </>
+        ) : (
+          <div className="mt-2 w-full max-w-md rounded-2xl border border-[#7C5CFF]/40 bg-[#7C5CFF]/5 p-5 text-left">
+            <p className="font-semibold">While your patch is sewn on...</p>
+
+            <label className="mt-4 block">
+              <span className="text-sm">What are you looking for here?</span>
+              <input
+                value={lookingFor}
+                onChange={(e) => setLookingFor(e.target.value)}
+                placeholder="Cofounder, first users, good conversations..."
+                className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm"
+              />
+              <span className="text-xs opacity-45">Helps your panda find your people.</span>
+            </label>
+
+            <label className="mt-3 block">
+              <span className="text-sm">When do you head out?</span>
+              <select
+                value={headsOut}
+                onChange={(e) => setHeadsOut(e.target.value)}
+                className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm"
+              >
+                {HEADS_OUT.map(([v, label]) => (
+                  <option key={v} value={v} className="bg-[#0a0a14]">
+                    {label}
+                  </option>
+                ))}
+              </select>
+              <span className="text-xs opacity-45">Shared windows make better intros.</span>
+            </label>
+
+            {event?.event?.ask_the_room && (
+              <label className="mt-3 block">
+                <span className="text-sm">{event.event.ask_the_room}</span>
+                <textarea
+                  value={askRoomAnswer}
+                  onChange={(e) => setAskRoomAnswer(e.target.value)}
+                  rows={2}
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm"
+                />
+                <span className="text-xs opacity-45">The host only ever sees the room&apos;s answers combined, never yours alone.</span>
+              </label>
+            )}
+
+            <label className="mt-4 flex cursor-pointer items-center justify-between rounded-lg border border-white/10 p-3">
+              <span className="text-sm">Let my panda introduce me to people at this event</span>
+              <input
+                type="checkbox"
+                checked={introsEnabled}
+                onChange={(e) => setIntrosEnabled(e.target.checked)}
+                className="h-5 w-5 accent-[#7C5CFF]"
+              />
+            </label>
+
+            <div className="mt-4 flex gap-3">
+              <button
+                onClick={saveIntent}
+                disabled={intentState === "saving"}
+                className="rounded-full bg-[#7C5CFF] px-6 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-40"
+              >
+                {intentState === "saving" ? "Saving..." : "Save"}
+              </button>
+              <button
+                onClick={() => setIntentState("skipped")}
+                className="rounded-full border border-white/15 px-6 py-2 text-sm opacity-60 hover:opacity-100"
+              >
+                Skip
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

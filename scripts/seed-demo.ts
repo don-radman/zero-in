@@ -58,7 +58,13 @@ async function main() {
       .single();
     if (uErr) throw uErr;
 
-    const traits = { country: h.country, interest: h.interest, vibe: "curious", palette: "cosmic-purple" };
+    const palettes = ["red", "orange", "yellow", "green", "teal", "blue", "purple", "pink"];
+    const traits = {
+      country: h.country,
+      worlds: [h.interest],
+      vibe: "curious",
+      palette: palettes[edition % palettes.length],
+    };
     const svg = proceduralPanda(traits);
     const gravity = GRAVITY.patchClaimFlagship + GRAVITY.intentRegistered;
     await client.from("agents").upsert({
@@ -77,9 +83,10 @@ async function main() {
       looking_for: h.lookingFor,
       logistics: { flies_out: h.fliesOut },
       ask_room_answered: true,
+      intros_enabled: true,
     });
     await client.from("memories").insert([
-      { user_id: user.id, kind: "profile", summary: `Joined from ${h.country}. Building: ${h.building}. Looking for: ${h.lookingFor}.` },
+      { user_id: user.id, kind: "profile", summary: `Joined from ${h.country}. World: ${h.building}.` },
       { user_id: user.id, kind: "ask_room", summary: `[demo] Better docs and faster faucets (from ${h.x})` },
     ]);
     console.log(`  seeded ${h.email} (patch #${edition})`);

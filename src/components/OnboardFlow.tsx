@@ -1,34 +1,32 @@
 "use client";
-// The onboarding flow: 4 questions + optional socials -> the hatch.
-// Auth is injected (Privy or dev email) so the flow itself stays identical.
+// Onboarding: three light questions (country, world, favorite color) then the
+// launch. "What are you looking for" and intro consent moved to the zero-in
+// moment (claim time), where they have context.
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { authedFetch, devMode } from "@/lib/clientAuth";
 import { COUNTRIES, flagUrl } from "@/lib/countries";
 import ConsentTap from "@/components/ConsentTap";
 
-const INTERESTS = [
+const WORLDS = [
   ["builder", "Building / shipping"],
-  ["defi", "DeFi / onchain finance"],
+  ["defi", "DeFi"],
   ["artist", "Art / design"],
   ["researcher", "Research"],
   ["community", "Community / events"],
   ["gaming", "Gaming"],
 ] as const;
 
-const PALETTES = [
-  ["cosmic-purple", "#7C5CFF"],
-  ["nebula-teal", "#18B8A6"],
-  ["solar-orange", "#FF8A3D"],
-  ["aurora-green", "#4CC26B"],
-  ["plasma-pink", "#F464A8"],
-  ["lunar-gray", "#8A93A6"],
-] as const;
-
-const CONSENT = [
-  ["event", "This event only", "Your panda only matches you with people at events you zero in at"],
-  ["community", "Community-wide", "Your panda can also match you across the whole community"],
-  ["off", "No intros", "Patches and memory only; your panda introduces you to no one"],
+const COLORS = [
+  ["red", "#E5484D"],
+  ["orange", "#FF8A3D"],
+  ["yellow", "#F5C518"],
+  ["green", "#4CC26B"],
+  ["teal", "#18B8A6"],
+  ["blue", "#3B82F6"],
+  ["purple", "#7C5CFF"],
+  ["pink", "#F464A8"],
+  ["silver", "#8A93A6"],
 ] as const;
 
 export type OnboardAuth = {
@@ -44,19 +42,18 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
   const [result, setResult] = useState<any>(null);
 
   const [country, setCountry] = useState("PT");
-  const [interest, setInterest] = useState("builder");
-  const [building, setBuilding] = useState("");
-  const [lookingFor, setLookingFor] = useState("");
-  const [consent, setConsent] = useState("event");
-  const [palette, setPalette] = useState("cosmic-purple");
+  const [worlds, setWorlds] = useState<string[]>([]);
+  const [otherOn, setOtherOn] = useState(false);
+  const [worldOther, setWorldOther] = useState("");
+  const [palette, setPalette] = useState("purple");
   const [socials, setSocials] = useState({ x: "", github: "", telegram: "" });
+
+  function toggleWorld(w: string) {
+    setWorlds((prev) => (prev.includes(w) ? prev.filter((x) => x !== w) : [...prev, w]));
+  }
 
   async function submit() {
     setError(null);
-    if (!building.trim() || !lookingFor.trim()) {
-      setError("Your panda needs both answers to find your people.");
-      return;
-    }
     setStep("hatching");
     try {
       const token = await auth.getAccessToken();
@@ -66,10 +63,8 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
           method: "POST",
           body: JSON.stringify({
             country,
-            interest,
-            building: building.trim(),
-            lookingFor: lookingFor.trim(),
-            consentScope: consent,
+            worlds,
+            worldOther: otherOn && worldOther.trim() ? worldOther.trim() : undefined,
             palette,
             vibe: "curious",
             socials: Object.fromEntries(Object.entries(socials).filter(([, v]) => v.trim())),
@@ -78,7 +73,7 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
         token
       );
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "onboarding failed");
+      if (!res.ok) throw new Error(data.error || "launch failed");
       setResult(data);
       setStep("hatched");
     } catch (e) {
@@ -100,7 +95,7 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
     return (
       <div className="flex flex-col items-center gap-5 py-10 text-center">
         <p className="text-sm uppercase tracking-widest text-[#7C5CFF]">Genesis</p>
-        <h1 className="text-3xl font-bold">Your panda has hatched</h1>
+        <h1 className="text-3xl font-bold">Your panda has launched</h1>
         <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={result.agent.panda_image_url} alt="Your panda" className="h-64 w-64 rounded-3xl" />
@@ -132,10 +127,10 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-md flex-col gap-6 py-8">
+    <div className="mx-auto flex w-full max-w-md flex-col gap-7 py-8">
       <div>
-        <h1 className="text-2xl font-bold">Four quick questions</h1>
-        <p className="text-sm opacity-60">Each one helps your panda find your people.</p>
+        <h1 className="text-2xl font-bold">Three quick questions</h1>
+        <p className="text-sm opacity-60">They shape how your panda looks.</p>
       </div>
 
       <label className="flex flex-col gap-2">
@@ -155,68 +150,63 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={flagUrl(country)} alt={country} className="h-6 rounded-sm" />
         </div>
-        <span className="text-xs opacity-45">Your flag rides on your panda&apos;s backpack.</span>
-      </label>
-
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium">What are you building or into?</span>
-        <select
-          value={interest}
-          onChange={(e) => setInterest(e.target.value)}
-          className="rounded-lg border border-white/15 bg-white/5 p-3"
-        >
-          {INTERESTS.map(([v, label]) => (
-            <option key={v} value={v} className="bg-[#0a0a14]">
-              {label}
-            </option>
-          ))}
-        </select>
-        <input
-          value={building}
-          onChange={(e) => setBuilding(e.target.value)}
-          placeholder="One line: what exactly?"
-          className="rounded-lg border border-white/15 bg-white/5 p-3"
-        />
-        <span className="text-xs opacity-45">Helps your panda find your people.</span>
-      </label>
-
-      <label className="flex flex-col gap-2">
-        <span className="text-sm font-medium">What are you looking for?</span>
-        <input
-          value={lookingFor}
-          onChange={(e) => setLookingFor(e.target.value)}
-          placeholder="Cofounder, first users, a grant, good conversations..."
-          className="rounded-lg border border-white/15 bg-white/5 p-3"
-        />
-        <span className="text-xs opacity-45">Helps your panda find your people.</span>
+        <span className="text-xs opacity-45">Your flag rides on your panda&apos;s backpack, and its suit trim picks up your flag&apos;s colors.</span>
       </label>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Intros</span>
-        {CONSENT.map(([v, label, why]) => (
-          <label key={v} className={`flex cursor-pointer items-start gap-3 rounded-lg border p-3 ${consent === v ? "border-[#7C5CFF] bg-[#7C5CFF]/10" : "border-white/15"}`}>
-            <input type="radio" checked={consent === v} onChange={() => setConsent(v)} className="mt-1" />
-            <span>
-              <span className="block text-sm font-medium">{label}</span>
-              <span className="block text-xs opacity-50">{why}</span>
-            </span>
-          </label>
-        ))}
+        <span className="text-sm font-medium">What is your world?</span>
+        <div className="flex flex-wrap gap-2">
+          {WORLDS.map(([v, label]) => (
+            <button
+              key={v}
+              type="button"
+              onClick={() => toggleWorld(v)}
+              className={`rounded-full border px-4 py-2 text-sm ${
+                worlds.includes(v) ? "border-[#7C5CFF] bg-[#7C5CFF]/20" : "border-white/15 hover:border-white/30"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setOtherOn(!otherOn)}
+            className={`rounded-full border px-4 py-2 text-sm ${
+              otherOn ? "border-[#7C5CFF] bg-[#7C5CFF]/20" : "border-white/15 hover:border-white/30"
+            }`}
+          >
+            Other
+          </button>
+        </div>
+        {otherOn && (
+          <input
+            value={worldOther}
+            onChange={(e) => setWorldOther(e.target.value)}
+            placeholder="Tell us your world..."
+            className="rounded-lg border border-white/15 bg-white/5 p-3"
+          />
+        )}
+        <span className="text-xs opacity-45">Pick as many as fit, or none. Shapes your panda&apos;s gear.</span>
       </div>
 
       <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium">Pick your suit colors</span>
-        <div className="flex gap-3">
-          {PALETTES.map(([name, hex]) => (
+        <span className="text-sm font-medium">Pick your favorite color</span>
+        <div className="flex flex-wrap gap-3">
+          {COLORS.map(([name, hex]) => (
             <button
               key={name}
+              type="button"
               onClick={() => setPalette(name)}
-              className={`h-9 w-9 rounded-full border-2 ${palette === name ? "border-white" : "border-transparent"}`}
+              title={name}
+              className={`h-10 w-10 rounded-full border-2 transition ${
+                palette === name ? "scale-110 border-white" : "border-transparent hover:scale-105"
+              }`}
               style={{ backgroundColor: hex }}
               aria-label={name}
             />
           ))}
         </div>
+        <span className="text-xs opacity-45">Highlights in your panda&apos;s fur and suit.</span>
       </div>
 
       <details className="rounded-lg border border-white/10 p-3">
@@ -241,7 +231,7 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
         disabled={!auth.ready}
         className="rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90 disabled:opacity-40"
       >
-        Hatch my panda
+        Launch my Panda
       </button>
     </div>
   );

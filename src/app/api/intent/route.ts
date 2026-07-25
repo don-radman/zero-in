@@ -10,7 +10,7 @@ import { GRAVITY } from "@/lib/gravity";
 export async function POST(req: Request) {
   try {
     const auth = await verifyAuth(req);
-    const { eventId, lookingFor, logistics, askRoomAnswer } = await req.json();
+    const { eventId, lookingFor, logistics, askRoomAnswer, introsEnabled } = await req.json();
     if (!eventId) return NextResponse.json({ error: "eventId required" }, { status: 400 });
 
     const client = db();
@@ -30,6 +30,7 @@ export async function POST(req: Request) {
       looking_for: lookingFor || null,
       logistics: logistics || {},
       ask_room_answered: !!askRoomAnswer,
+      intros_enabled: introsEnabled === false ? false : true,
     });
     if (error) throw error;
 

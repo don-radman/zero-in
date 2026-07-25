@@ -23,18 +23,26 @@ export async function loadCohort(eventId: string): Promise<CohortMember[]> {
   const client = db();
   const { data: rows, error } = await client
     .from("patches")
-    .select("user_id, users:user_id(id, email, socials, consent_scope, country)")
+    .select("user_id, users:user_id(id, email, socials, country)")
     .eq("event_id", eventId);
   if (error) throw error;
+  if (!rows?.length) return [];
 
-  const consenting = (rows || []).filter((r: any) => r.users && r.users.consent_scope !== "off");
-  if (consenting.length === 0) return [];
-
-  const ids = consenting.map((r: any) => r.users.id);
+  const ids = rows.map((r: any) => r.users.id);
   const [{ data: memories }, { data: intents }] = await Promise.all([
     client.from("memories").select("user_id, kind, summary").in("user_id", ids).eq("kind", "profile"),
-    client.from("intents").select("user_id, looking_for, logistics").eq("event_id", eventId).in("user_id", ids),
+    client
+      .from("intents")
+      .select("user_id, looking_for, logistics, intros_enabled")
+      .eq("event_id", eventId)
+      .in("user_id", ids),
   ]);
+
+  // Consent is per-event: only members who saved an intent with intros ON.
+  const consenting = rows.filter((r: any) => {
+    const intent = (intents || []).find((i: any) => i.user_id === r.users.id);
+    return intent && intent.intros_enabled;
+  });
 
   return consenting.map((r: any) => {
     const profile = (memories || []).find((m: any) => m.user_id === r.users.id)?.summary || "";
@@ -43,8 +51,8 @@ export async function loadCohort(eventId: string): Promise<CohortMember[]> {
     return {
       userId: r.users.id,
       name: handle || r.users.email.split("@")[0],
-      building: profile.match(/Building: (.*?)\./)?.[1] || "",
-      lookingFor: profile.match(/Looking for: (.*?)\.$/)?.[1] || "",
+      building: profile.match(/World: (.*?)\.$/)?.[1] || "",
+      lookingFor: "",
       intentLookingFor: intent?.looking_for || null,
       logistics: intent?.logistics || {},
     };

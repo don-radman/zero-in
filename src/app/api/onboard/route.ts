@@ -15,14 +15,15 @@ export async function POST(req: Request) {
   try {
     const auth = await verifyAuth(req);
     const body = await req.json();
-    const { country, interest, building, lookingFor, consentScope, socials, vibe, palette } = body;
-    if (!country || !building || !lookingFor) {
-      return NextResponse.json({ error: "country, building, lookingFor required" }, { status: 400 });
+    const { country, worlds, worldOther, socials, vibe, palette } = body;
+    if (!country) {
+      return NextResponse.json({ error: "country required" }, { status: 400 });
     }
+    const worldList: string[] = Array.isArray(worlds) ? worlds : [];
 
     const client = db();
 
-    // Upsert user
+    // Upsert user (intro consent is per-event now, captured at claim time)
     const { data: user, error: userErr } = await client
       .from("users")
       .upsert(
@@ -32,7 +33,6 @@ export async function POST(req: Request) {
           wallet: auth.wallet,
           country,
           socials: socials || {},
-          consent_scope: consentScope || "event",
         },
         { onConflict: "email" }
       )
@@ -46,17 +46,18 @@ export async function POST(req: Request) {
       return NextResponse.json({ user, agent: existing, existed: true });
     }
 
-    // The hatch: generate the panda (never throws; falls back to SVG)
+    // The launch: generate the panda (never throws; falls back to SVG)
     const traits = {
       country,
-      interest: interest || "builder",
+      worlds: worldList,
+      worldOther: worldOther || undefined,
       vibe: vibe || "curious",
-      palette: palette || "cosmic-purple",
+      palette: palette || "purple",
     };
     const panda = await generatePanda(traits);
 
     // Mint the Agentic ID (profile committed as hashes, never plaintext)
-    const profileJson = JSON.stringify({ country, building, lookingFor, socials: socials || {} });
+    const profileJson = JSON.stringify({ country, worlds: worldList, worldOther, socials: socials || {} });
     let tokenId: bigint | null = null;
     let mintTx: string | null = null;
 
@@ -92,10 +93,11 @@ export async function POST(req: Request) {
     if (agentErr) throw agentErr;
 
     // Memory mirror ("what my panda knows" reads from here)
+    const worldText = [...worldList, worldOther].filter(Boolean).join(", ") || "unspecified";
     await client.from("memories").insert({
       user_id: user.id,
       kind: "profile",
-      summary: `Joined from ${country}. Building: ${building}. Looking for: ${lookingFor}.`,
+      summary: `Joined from ${country}. World: ${worldText}.`,
     });
 
     return NextResponse.json({
