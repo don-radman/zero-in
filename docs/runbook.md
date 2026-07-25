@@ -5,10 +5,10 @@
 - **Production:** https://zeroin.space (bought via Vercel $1.99/yr, registrar +
   DNS both Vercel, expires Jul 2027; https://zero-in-three.vercel.app stays as
   alias; GitHub pushes to main auto-deploy)
-- **ETHGlobal Lisbon 2026 event** (on-chain id 2, cap 200, flagship, patch art attached):
-  - NFC claim URL: `https://zero-in-three.vercel.app/z/71dcf6ab-86ad-4e52-bd09-6a78471ad9f7?k=gx0GW4WNf9aaM6Lc`
-  - Rotating QR screen: `https://zero-in-three.vercel.app/host/71dcf6ab-86ad-4e52-bd09-6a78471ad9f7/screen`
-  - Host dashboard: `https://zero-in-three.vercel.app/host/71dcf6ab-86ad-4e52-bd09-6a78471ad9f7`
+- **ETHGlobal Lisbon 2026 event** (on-chain id 3, cap 200, flagship, patch art attached):
+  - NFC claim URL: `https://zeroin.space/z/0b62e65f-8f93-4534-b201-10dc86da14c2?k=3Xi2BWHh1Kz8RWQn`
+  - Rotating QR screen: `https://zeroin.space/host/0b62e65f-8f93-4534-b201-10dc86da14c2/screen`
+  - Host dashboard: `https://zeroin.space/host/0b62e65f-8f93-4534-b201-10dc86da14c2`
 - Contracts: ZeroInAgent `0xF90Bf0e1Fc1AC8CB97D1e999f1227896b40eC09c`, ZeroInPatches `0x1dc0a41141d28212d12a5A6456eE941A208F5C36`
 - Still pending: Privy allowed origin for the vercel domain (Dan), Gemini billing (Dan), Router key from pc.0g.ai booth (Dan), 8004 registration + Resend (later).
 
