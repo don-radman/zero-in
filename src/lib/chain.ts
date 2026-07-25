@@ -43,3 +43,26 @@ export const PATCHES_CONTRACT = (process.env.PATCHES_CONTRACT || "") as `0x${str
 export function explorerTx(hash: string) {
   return `${process.env.NEXT_PUBLIC_EXPLORER || "https://chainscan-galileo.0g.ai"}/tx/${hash}`;
 }
+
+export function requireContracts() {
+  if (!AGENT_CONTRACT || !PATCHES_CONTRACT) {
+    throw new Error("AGENT_CONTRACT / PATCHES_CONTRACT not set (run scripts/deploy.ts first)");
+  }
+}
+
+/** Simulate-then-write with a relayer key; returns the tx hash after inclusion. */
+export async function relayerWrite(params: {
+  address: `0x${string}`;
+  abi: any;
+  functionName: string;
+  args: readonly unknown[];
+}): Promise<{ hash: `0x${string}`; result: unknown }> {
+  const wallet = nextRelayer();
+  const { request, result } = await publicClient.simulateContract({
+    account: wallet.account,
+    ...params,
+  } as any);
+  const hash = await wallet.writeContract(request);
+  await publicClient.waitForTransactionReceipt({ hash });
+  return { hash, result };
+}
