@@ -35,7 +35,7 @@ export async function loadCohort(eventId: string): Promise<CohortMember[]> {
       .from("memories")
       .select("user_id, kind, summary")
       .in("user_id", ids)
-      .in("kind", ["profile", "taught"]),
+      .in("kind", ["profile", "taught", "ask_room"]),
     client
       .from("intents")
       .select("user_id, looking_for, logistics, intros_enabled")
@@ -43,19 +43,22 @@ export async function loadCohort(eventId: string): Promise<CohortMember[]> {
       .in("user_id", ids),
   ]);
 
-  // Consent is per-event: only members who saved an intent with intros ON.
+  // Everyone who claimed is matchable unless they explicitly opted OUT.
+  // A suggestion card IS the consent question: nothing happens without the
+  // double yes, so being suggested costs nothing.
   const consenting = rows.filter((r: any) => {
     const intent = (intents || []).find((i: any) => i.user_id === r.users.id);
-    return intent && intent.intros_enabled;
+    return !intent || intent.intros_enabled !== false;
   });
 
   return consenting.map((r: any) => {
     const mine = (memories || []).filter((m: any) => m.user_id === r.users.id);
     const profile = mine.find((m: any) => m.kind === "profile")?.summary || "";
-    // Everything the member taught their panda feeds the match (last 6 facts)
+    // Everything the member gave their panda feeds the match: teach-chat
+    // facts plus what they chose to share with the room (last 8 entries)
     const facts = mine
-      .filter((m: any) => m.kind === "taught")
-      .slice(-6)
+      .filter((m: any) => m.kind === "taught" || m.kind === "ask_room")
+      .slice(-8)
       .map((m: any) => m.summary)
       .join(" | ");
     const intent = (intents || []).find((i: any) => i.user_id === r.users.id);
@@ -87,19 +90,24 @@ async function scoreWithCompute(cohort: CohortMember[]): Promise<PairScore[]> {
   }));
   const res = await client.chat.completions.create({
     model: CHAT_MODEL,
+    max_tokens: 2000,
     messages: [
       {
         role: "system",
         content:
-          "You match event attendees for warm intros. Pick the best pairs (complementary needs beat similarity; shared logistics like matching flight-out days are a bonus). " +
-          'Reply ONLY with JSON: {"pairs":[{"a":"<id>","b":"<id>","reason":"<one specific sentence naming what each gets>","window":"<concrete suggestion like: coffee at the venue cafe around 4>"}]}. ' +
-          "At most 3 pairs per person. No pair without a genuinely specific reason.",
+          "You match event attendees for warm intros. Search every field for common ground: worlds, what they seek, what they shared, logistics. " +
+          "Complementary needs beat similarity; shared flight-out days are a bonus. " +
+          "EVERY person in the roster MUST appear in at least one pair. When information is thin, find the most plausible link (same world, both new here, shared timing) and phrase it warmly and honestly; never invent facts. " +
+          'Reply ONLY with JSON, no prose: {"pairs":[{"a":"<id>","b":"<id>","reason":"<one specific sentence naming what each gets>","window":"<concrete suggestion like: coffee at the venue cafe around 4>"}]}. ' +
+          "At most 3 pairs per person.",
       },
       { role: "user", content: JSON.stringify(roster) },
     ],
-    response_format: { type: "json_object" } as any,
   });
-  const parsed = JSON.parse(res.choices[0]?.message?.content || "{}");
+  // Robust parse: some models wrap JSON in prose or fences
+  const content = res.choices[0]?.message?.content || "";
+  const jsonMatch = content.match(/\{[\s\S]*\}/);
+  const parsed = JSON.parse(jsonMatch ? jsonMatch[0] : "{}");
   return Array.isArray(parsed.pairs) ? parsed.pairs : [];
 }
 
@@ -138,10 +146,10 @@ function scoreHeuristic(cohort: CohortMember[]): PairScore[] {
 }
 
 /** Run matching for an event; inserts new suggestions respecting caps. */
-export async function runMatch(eventId: string): Promise<{ created: number; cohort: number }> {
+export async function runMatch(eventId: string): Promise<{ created: number; cohort: number; covered: number }> {
   const client = db();
   const cohort = await loadCohort(eventId);
-  if (cohort.length < 2) return { created: 0, cohort: cohort.length };
+  if (cohort.length < 2) return { created: 0, cohort: cohort.length, covered: 0 };
 
   let scored: PairScore[];
   if (process.env.ROUTER_API_KEY) {
@@ -170,12 +178,13 @@ export async function runMatch(eventId: string): Promise<{ created: number; coho
 
   const ids = new Set(cohort.map((c) => c.userId));
   let created = 0;
-  for (const p of scored) {
-    if (!ids.has(p.a) || !ids.has(p.b) || p.a === p.b) continue;
+
+  async function insertPair(p: PairScore): Promise<boolean> {
+    if (!ids.has(p.a) || !ids.has(p.b) || p.a === p.b) return false;
     const key = [p.a, p.b].sort().join("|");
-    if (seen.has(key)) continue;
-    if ((activeCount.get(p.a) || 0) >= MAX_ACTIVE_PER_MEMBER) continue;
-    if ((activeCount.get(p.b) || 0) >= MAX_ACTIVE_PER_MEMBER) continue;
+    if (seen.has(key)) return false;
+    if ((activeCount.get(p.a) || 0) >= MAX_ACTIVE_PER_MEMBER) return false;
+    if ((activeCount.get(p.b) || 0) >= MAX_ACTIVE_PER_MEMBER) return false;
 
     const { error } = await client.from("suggestions").insert({
       event_id: eventId,
@@ -185,14 +194,42 @@ export async function runMatch(eventId: string): Promise<{ created: number; coho
       time_window: p.window,
       expires_at: new Date(Date.now() + EXPIRY_HOURS * 3600_000).toISOString(),
     });
-    if (!error) {
-      created++;
-      seen.add(key);
-      activeCount.set(p.a, (activeCount.get(p.a) || 0) + 1);
-      activeCount.set(p.b, (activeCount.get(p.b) || 0) + 1);
-    }
+    if (error) return false;
+    created++;
+    seen.add(key);
+    activeCount.set(p.a, (activeCount.get(p.a) || 0) + 1);
+    activeCount.set(p.b, (activeCount.get(p.b) || 0) + 1);
+    return true;
   }
-  return { created, cohort: cohort.length };
+
+  for (const p of scored) await insertPair(p);
+
+  // Coverage pass: every panda gets at least one card to say yes or no to.
+  // Partner = the least-booked other member; reason from real shared ground
+  // (worlds/logistics), else the honest baseline: same room, same event.
+  const uncovered = cohort.filter((m) => (activeCount.get(m.userId) || 0) === 0);
+  for (const m of uncovered) {
+    const candidates = cohort
+      .filter((o) => o.userId !== m.userId && !seen.has([m.userId, o.userId].sort().join("|")))
+      .filter((o) => (activeCount.get(o.userId) || 0) < MAX_ACTIVE_PER_MEMBER)
+      .sort((x, y) => (activeCount.get(x.userId) || 0) - (activeCount.get(y.userId) || 0));
+    const partner = candidates[0];
+    if (!partner) continue;
+
+    const sharedWorld = m.building && partner.building &&
+      m.building.split(/,\s*/).find((w) => partner.building.includes(w));
+    const sharedOut = m.logistics.flies_out && m.logistics.flies_out === partner.logistics.flies_out;
+    const reason = sharedWorld
+      ? `You are both in the ${sharedWorld} world at ETHGlobal Lisbon: worth comparing notes.`
+      : `You both zeroed in at ETHGlobal Lisbon and your pandas think a hello could go somewhere.`;
+    const window = sharedOut
+      ? `You both head out ${m.logistics.flies_out}. Coffee before you go?`
+      : "Find each other near the patch station.";
+    await insertPair({ a: m.userId, b: partner.userId, reason, window });
+  }
+
+  const covered = cohort.filter((m) => (activeCount.get(m.userId) || 0) > 0).length;
+  return { created, cohort: cohort.length, covered };
 }
 
 /** Intro message on double opt-in, attributed to the initiating panda. */
