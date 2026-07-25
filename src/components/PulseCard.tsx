@@ -106,7 +106,10 @@ export default function PulseCard({
         <p className="font-semibold">Quick pulse: {eventName}</p>
         <span className="rounded-full bg-[#18B8A6]/20 px-3 py-1 text-xs font-semibold text-[#5EEAD4]">+10 gravity</span>
       </div>
-      <p className="mt-1 text-xs opacity-50">Optional, once per patch. The host only ever sees the room combined.</p>
+      <p className="mt-1 text-xs opacity-50">
+        Optional, once per patch. Shared with the host anonymously, no name
+        attached, and synthesized in aggregate on 0G Compute.
+      </p>
 
       <p className="mt-4 text-sm font-medium">How do you feel about the vibes here?</p>
       <div className="mt-2 flex flex-wrap gap-2">

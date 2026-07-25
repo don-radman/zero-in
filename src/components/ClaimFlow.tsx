@@ -223,7 +223,7 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
                   rows={2}
                   className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm"
                 />
-                <span className="text-xs opacity-45">The host only ever sees the room&apos;s answers combined, never yours alone.</span>
+                <span className="text-xs opacity-45">Shared with the host anonymously, never with your name attached.</span>
               </label>
             )}
 

@@ -32,10 +32,11 @@ export default function HostDashboard({ eventId }: { eventId: string }) {
   if (!stats) return <p className="py-20 text-center opacity-60">Reading the room...</p>;
 
   const tiles = [
-    ["Zeroed in", stats.claims + (stats.event.cap ? ` / ${stats.event.cap}` : "")],
+    ["Zeroed in", stats.claims],
     ["First-timers", stats.firstTimers],
+    ["Hunting (opted in)", stats.optedIn ?? 0],
     ["Intros suggested", stats.intros.created],
-    ["Intros made", stats.intros.matched],
+    ["Connections made", stats.intros.matched],
     ["Debriefs done", stats.debriefsDone],
   ] as const;
 
@@ -85,14 +86,21 @@ export default function HostDashboard({ eventId }: { eventId: string }) {
         {stats.askTheRoom.question ? (
           <>
             <p className="mt-1 text-sm opacity-70">&quot;{stats.askTheRoom.question}&quot;</p>
-            {stats.askTheRoom.summary ? (
+            {stats.askTheRoom.summary && (
               <pre className="mt-3 whitespace-pre-wrap font-sans text-sm">{stats.askTheRoom.summary}</pre>
-            ) : (
-              <p className="mt-3 text-sm opacity-50">
-                {stats.askTheRoom.answers} answer{stats.askTheRoom.answers === 1 ? "" : "s"} collected.
-                {stats.askTheRoom.answers < stats.minCohort && ` Synthesis unlocks at ${stats.minCohort} (privacy floor).`}
-              </p>
             )}
+            {stats.askTheRoom.answersList?.length > 0 ? (
+              <ul className="mt-3 flex flex-col gap-1 text-sm opacity-80">
+                {stats.askTheRoom.answersList.map((a: string, i: number) => (
+                  <li key={i}>- {a}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-sm opacity-50">No answers yet.</p>
+            )}
+            <p className="mt-2 text-[10px] uppercase tracking-wider opacity-40">
+              Anonymous, no names attached. Synthesis on 0G Compute at {stats.minCohort}+ answers.
+            </p>
           </>
         ) : (
           <p className="mt-1 text-sm opacity-50">No question set for this event.</p>

@@ -39,6 +39,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ eventId
       matched: (suggestions || []).filter((s) => s.status === "matched").length,
     };
 
+    // Members hunting: opted into intros at this event
+    const { count: optedIn } = await client
+      .from("intents")
+      .select("*", { count: "exact", head: true })
+      .eq("event_id", eventId)
+      .eq("intros_enabled", true);
+
     const emojis: Record<string, number> = {};
     for (const p of cohort) if (p.emoji_pulse) emojis[p.emoji_pulse] = (emojis[p.emoji_pulse] || 0) + 1;
 
@@ -55,11 +62,13 @@ export async function GET(_req: Request, { params }: { params: Promise<{ eventId
       if (p.improvement) improvements.push(p.improvement);
     }
 
-    // Ask-the-Room synthesis (0G Compute), only above the privacy floor
-    let askTheRoom: { question: string | null; summary: string | null; answers: number } = {
+    // Ask-the-Room: anonymized answers to the host (the question is framed as
+    // sharing with the room); LLM synthesis on 0G Compute above the floor.
+    let askTheRoom: { question: string | null; summary: string | null; answers: number; answersList: string[] } = {
       question: event.ask_the_room,
       summary: null,
       answers: 0,
+      answersList: [],
     };
     if (event.ask_the_room && userIds.length) {
       const { data: answers } = await client
@@ -68,6 +77,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ eventId
         .eq("kind", "ask_room")
         .in("user_id", userIds);
       askTheRoom.answers = (answers || []).length;
+      askTheRoom.answersList = (answers || []).map((a: any) => a.summary).slice(0, 50);
       if (askTheRoom.answers >= MIN_COHORT && process.env.ROUTER_API_KEY) {
         try {
           const res = await routerClient().chat.completions.create({
@@ -94,6 +104,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ eventId
       firstTimers,
       intros,
       debriefsDone: cohort.filter((p) => p.debrief_done).length,
+      optedIn: optedIn ?? 0,
       emojis,
       pulse: {
         shared: pulses.length,

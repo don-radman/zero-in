@@ -49,7 +49,7 @@ export default function Home() {
         />
       ))}
 
-      <div className="relative flex flex-col items-center gap-6">
+      <div className="relative flex min-h-[72vh] flex-col items-center justify-center gap-6">
         <h1 className="bg-gradient-to-br from-white via-white to-[#7C5CFF] bg-clip-text text-7xl font-black tracking-tight text-transparent sm:text-8xl">
           ZERO-IN
         </h1>
@@ -63,10 +63,57 @@ export default function Home() {
         >
           Launch Your Panda
         </Link>
-        <p className="mt-12 text-xs opacity-30">
+      </div>
+
+      <section className="relative mx-auto mt-8 w-full max-w-3xl">
+        <h2 className="text-center text-sm uppercase tracking-[0.25em] text-[#7C5CFF]">How it works</h2>
+        <div className="mt-6 grid gap-4 text-left sm:grid-cols-2">
+          {[
+            [
+              "01",
+              "Launch your Panda",
+              "One email. No wallet, no seed phrase, no gas. You get a one-of-one astronaut panda: your personal AI agent, minted as an Agentic ID on 0G.",
+            ],
+            [
+              "02",
+              "Zero in at events",
+              "Tap the tag at the door. A numbered patch gets sewn onto your suit, on-chain, and your Gravity climbs.",
+            ],
+            [
+              "03",
+              "Your panda hunts",
+              "Tell it what you're looking for. It learns privately: memory encrypted on 0G Storage, only fingerprints on-chain, and it scans the room on 0G Compute.",
+            ],
+            [
+              "04",
+              "Meet your people",
+              "Intros only happen when you BOTH say yes. Then it lands with the reason and a time: real connections, zero cold approaches.",
+            ],
+          ].map(([n, title, body]) => (
+            <div key={n} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">
+              <p className="text-xs font-bold text-[#7C5CFF]">{n}</p>
+              <p className="mt-1 font-bold">{title}</p>
+              <p className="mt-2 text-sm leading-relaxed opacity-70">{body}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/[0.04] p-5 text-center">
+          <p className="text-sm font-bold">Gravity is your pull</p>
+          <p className="mt-2 text-sm opacity-70">
+            +20 patch claim · +10 intro made · +10 event pulse · +2 telling your panda what you seek
+          </p>
+          <p className="mt-2 text-xs tracking-wide opacity-45">Cadet -&gt; Explorer -&gt; Voyager -&gt; Legend</p>
+        </div>
+
+        <p className="mx-auto mt-8 max-w-xl text-center text-sm italic opacity-60">
+          &quot;We don&apos;t ask you to trust Zero-In with your data. The token standard
+          makes it impossible for Zero-In to have it.&quot;
+        </p>
+        <p className="mb-6 mt-10 text-center text-xs opacity-30">
           Built on 0G: Chain, Compute, Storage, Agentic ID (ERC-7857 + ERC-8004)
         </p>
-      </div>
+      </section>
     </main>
   );
 }
