@@ -13,8 +13,10 @@ export function routerClient() {
   });
 }
 
-// Default chat model; confirm against GET /v1/models (spike-compute prints the list).
-export const CHAT_MODEL = process.env.ROUTER_CHAT_MODEL || "zai-org/GLM-5-FP8";
+// Default chat model, verified against the live GET /v1/models (Jul 25):
+// glm-5.2 (open flagship). Override with ROUTER_CHAT_MODEL.
+// Image model on the router: z-image-turbo (async b64), tertiary behind Gemini.
+export const CHAT_MODEL = process.env.ROUTER_CHAT_MODEL || "glm-5.2";
 
 export type ComputeReceipt = {
   when: string;
