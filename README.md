@@ -33,9 +33,9 @@ flow a 0G team member described to us at the booth on Friday.
 
 | Contract | Address | Explorer |
 |---|---|---|
-| ZeroInAgent (ERC-7857) | TBD after deploy | TBD |
-| ZeroInPatches (ERC-1155) | TBD after deploy | TBD |
-| Example Agentic ID minted | TBD | TBD (+ 8004scan link) |
+| ZeroInAgent (ERC-7857) | `0xF90Bf0e1Fc1AC8CB97D1e999f1227896b40eC09c` | [chainscan](https://chainscan-galileo.0g.ai/address/0xF90Bf0e1Fc1AC8CB97D1e999f1227896b40eC09c) |
+| ZeroInPatches (ERC-1155) | `0x1dc0a41141d28212d12a5A6456eE941A208F5C36` | [chainscan](https://chainscan-galileo.0g.ai/address/0x1dc0a41141d28212d12a5a6456ee941a208f5c36) |
+| First Agentic ID minted (token 0: profile_v1, memory_root, patch:1) | [mint tx](https://chainscan-galileo.0g.ai/tx/0x0ff551f84566d0e7ba0523e085092f54d23240c002109bda8d8778017d0e88d6) | 8004scan link TBD after registration |
 
 ## Architecture
 

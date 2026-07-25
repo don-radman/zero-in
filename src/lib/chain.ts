@@ -50,6 +50,19 @@ export function requireContracts() {
   }
 }
 
+/** Receipt polling that tolerates 0G RPC briefly 404ing fresh transactions
+ *  (viem's waitForTransactionReceipt has thrown on this in practice). */
+export async function waitReceipt(hash: `0x${string}`) {
+  for (let i = 0; i < 30; i++) {
+    try {
+      return await publicClient.getTransactionReceipt({ hash });
+    } catch {
+      await new Promise((r) => setTimeout(r, 2000));
+    }
+  }
+  throw new Error(`Receipt for ${hash} not found after 60s`);
+}
+
 /** Simulate-then-write with a relayer key; returns the tx hash after inclusion. */
 export async function relayerWrite(params: {
   address: `0x${string}`;
@@ -63,6 +76,6 @@ export async function relayerWrite(params: {
     ...params,
   } as any);
   const hash = await wallet.writeContract(request);
-  await publicClient.waitForTransactionReceipt({ hash });
+  await waitReceipt(hash);
   return { hash, result };
 }
