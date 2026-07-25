@@ -79,7 +79,7 @@ export default function Home() {
             ],
             [
               "02",
-              "Zero in at events",
+              "Zero-In at events",
               "Tap the tag at the door. A numbered patch gets sewn onto your suit, on-chain, and your Gravity climbs.",
             ],
             [
@@ -89,8 +89,8 @@ export default function Home() {
             ],
             [
               "04",
-              "Meet your people",
-              "Intros only happen when you BOTH say yes. Then it lands with the reason and a time: real connections, zero cold approaches.",
+              "Panda Connections",
+              "When two pandas find a match, both humans get asked. Only a double yes makes it a Panda Connection: the intro lands with the reason and a time, zero cold approaches.",
             ],
           ].map(([n, title, body]) => (
             <div key={n} className="rounded-2xl border border-white/10 bg-white/[0.04] p-5">

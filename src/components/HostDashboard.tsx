@@ -52,10 +52,6 @@ export default function HostDashboard({ eventId }: { eventId: string }) {
             <p className="text-xs uppercase tracking-wider opacity-50">{label}</p>
           </div>
         ))}
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-          <p className="text-2xl">{Object.entries(stats.emojis).map(([e, n]) => `${e}${n}`).join(" ") || "-"}</p>
-          <p className="text-xs uppercase tracking-wider opacity-50">Room pulse</p>
-        </div>
       </div>
 
       {stats.pulse?.shared > 0 && (

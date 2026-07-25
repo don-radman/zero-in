@@ -9,7 +9,6 @@ import { usePrivy } from "@privy-io/react-auth";
 import { authedFetch, devMode, getDevEmail } from "@/lib/clientAuth";
 import ConsentTap from "@/components/ConsentTap";
 
-const EMOJI = ["🔥", "🤝", "🧠", "😴", "🚀"];
 const HEADS_OUT = [
   ["", "Not sure yet"],
   ["saturday", "Tonight"],
@@ -18,7 +17,7 @@ const HEADS_OUT = [
   ["later", "Sticking around"],
 ] as const;
 
-type Phase = "loading" | "ready" | "claiming" | "done" | "error";
+type Phase = "loading" | "ready" | "claiming" | "stars" | "done" | "error";
 
 function useAccessToken(): { ready: boolean; get: () => Promise<string | null>; authed: boolean } {
   // In dev mode there is no Privy context; keep the hook order stable.
@@ -38,7 +37,6 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
   const [event, setEvent] = useState<any>(null);
   const [result, setResult] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
-  const [emoji, setEmoji] = useState<string | null>(null);
 
   // Intent card state (post-claim)
   const [lookingFor, setLookingFor] = useState("");
@@ -78,7 +76,7 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
       const t = await token.get();
       const res = await authedFetch(
         "/api/claim",
-        { method: "POST", body: JSON.stringify({ eventId, k, emojiPulse: emoji }) },
+        { method: "POST", body: JSON.stringify({ eventId, k }) },
         t
       );
       const data = await res.json();
@@ -88,7 +86,8 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
       }
       if (!res.ok) throw new Error(data.error || "claim failed");
       setResult(data);
-      setPhase("done");
+      setPhase("stars");
+      setTimeout(() => setPhase("done"), 1500);
     } catch (e) {
       setError(e instanceof Error ? e.message : "claim failed");
       setPhase("error");
@@ -126,6 +125,25 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
   }
 
   if (phase === "loading") return <p className="py-24 text-center opacity-60">Finding the event...</p>;
+
+  if (phase === "stars") {
+    return (
+      <div className="relative flex min-h-[60vh] flex-col items-center justify-center overflow-hidden text-center">
+        {Array.from({ length: 18 }, (_, i) => (
+          <span
+            key={i}
+            className="shooting-star"
+            style={{
+              left: `${(i * 11.7) % 100}%`,
+              top: `${(i * 17.3) % 80}%`,
+              animationDelay: `${(i * 0.08).toFixed(2)}s`,
+            }}
+          />
+        ))}
+        <p className="text-2xl font-black tracking-wide">Patch secured</p>
+      </div>
+    );
+  }
 
   if (phase === "error") {
     return (
@@ -166,22 +184,28 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
 
         {intentState === "saved" || intentState === "skipped" ? (
           <>
-            {intentState === "saved" && introsEnabled && (
+            {intentState === "saved" && introsEnabled ? (
               <>
                 {result.agentTokenId !== null && result.agentTokenId !== undefined && !devMode() && (
                   <div className="w-full max-w-md">
                     <ConsentTap tokenId={result.agentTokenId} getToken={token.get} />
                   </div>
                 )}
-                <p className="text-sm opacity-70">Your panda is on the hunt. Check your dash for intros.</p>
+                <button
+                  onClick={() => router.push("/me")}
+                  className="mt-1 text-sm underline opacity-50 hover:opacity-90"
+                >
+                  or go straight to your Panda Dash
+                </button>
               </>
+            ) : (
+              <button
+                onClick={() => router.push("/me")}
+                className="mt-2 rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90"
+              >
+                Open your Panda Dash
+              </button>
             )}
-            <button
-              onClick={() => router.push("/me")}
-              className="mt-2 rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90"
-            >
-              Open your Panda Dash
-            </button>
           </>
         ) : (
           <div className="mt-2 w-full max-w-md rounded-2xl border border-[#7C5CFF]/40 bg-[#7C5CFF]/5 p-5 text-left">
@@ -278,7 +302,7 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
 
   return (
     <div className="flex flex-col items-center gap-6 py-16 text-center">
-      <p className="text-sm uppercase tracking-widest text-[#7C5CFF]">Zero in</p>
+      <p className="text-sm uppercase tracking-widest text-[#7C5CFF]">Zero-In</p>
       <h1 className="text-3xl font-bold">{event?.event?.name}</h1>
       {event?.event?.patch_art_url && (
         // eslint-disable-next-line @next/next/no-img-element
@@ -292,18 +316,6 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
         {event?.claimed} {event?.claimed === 1 ? "person has" : "people have"} zeroed in
         {event?.event?.cap ? ` (cap ${event.event.cap})` : ""}
       </p>
-      <div className="flex gap-2">
-        {EMOJI.map((e) => (
-          <button
-            key={e}
-            onClick={() => setEmoji(emoji === e ? null : e)}
-            className={`rounded-full border p-2 text-xl ${emoji === e ? "border-[#7C5CFF] bg-[#7C5CFF]/20" : "border-white/10"}`}
-          >
-            {e}
-          </button>
-        ))}
-      </div>
-      <p className="text-xs opacity-40">optional: how is it so far?</p>
       <button
         onClick={claim}
         disabled={phase === "claiming" || !token.ready}

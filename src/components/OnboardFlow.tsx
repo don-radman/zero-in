@@ -56,7 +56,9 @@ function SuitingUp() {
     return () => clearInterval(t);
   }, []);
   return (
-    <div className="flex flex-col items-center gap-6 py-24 text-center">
+    <div className="relative flex min-h-[60vh] flex-col items-center justify-center gap-6 overflow-hidden py-24 text-center">
+      <span className="chase-panda a" style={{ left: "10%", top: "20%" }}>🐼</span>
+      <span className="chase-panda b" style={{ left: "12%", top: "62%" }}>🐼</span>
       <div className="h-24 w-24 animate-pulse rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#18B8A6]" />
       <p className="text-lg opacity-80">{SUITING_LINES[line]}</p>
       <p className="text-xs opacity-40">Every panda is generated once, just for you. Worth the ~30 seconds.</p>

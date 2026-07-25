@@ -30,8 +30,11 @@ export default function SuggestionCards({ getToken }: { getToken: () => Promise<
 
   return (
     <section className="mt-10">
-      <h2 className="mb-1 text-lg font-bold">Your panda found people</h2>
-      <p className="mb-3 text-xs opacity-50">Intros only happen when both of you say yes.</p>
+      <h2 className="mb-1 text-lg font-bold">Panda Connections</h2>
+      <p className="mb-3 text-xs opacity-50">
+        When two pandas find a match, both humans get asked. A double yes makes
+        it a Connection: the intro lands with the reason and a time.
+      </p>
       {cards.length === 0 && <p className="text-sm opacity-50">Your panda keeps looking...</p>}
       <div className="flex flex-col gap-3">
         {cards.map((c) => (

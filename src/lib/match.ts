@@ -14,6 +14,7 @@ export type CohortMember = {
   lookingFor: string;
   intentLookingFor: string | null;
   logistics: Record<string, string>;
+  facts: string; // what the member taught their panda (teach-chat memories)
 };
 
 const MAX_ACTIVE_PER_MEMBER = 3;
@@ -30,7 +31,11 @@ export async function loadCohort(eventId: string): Promise<CohortMember[]> {
 
   const ids = rows.map((r: any) => r.users.id);
   const [{ data: memories }, { data: intents }] = await Promise.all([
-    client.from("memories").select("user_id, kind, summary").in("user_id", ids).eq("kind", "profile"),
+    client
+      .from("memories")
+      .select("user_id, kind, summary")
+      .in("user_id", ids)
+      .in("kind", ["profile", "taught"]),
     client
       .from("intents")
       .select("user_id, looking_for, logistics, intros_enabled")
@@ -45,7 +50,14 @@ export async function loadCohort(eventId: string): Promise<CohortMember[]> {
   });
 
   return consenting.map((r: any) => {
-    const profile = (memories || []).find((m: any) => m.user_id === r.users.id)?.summary || "";
+    const mine = (memories || []).filter((m: any) => m.user_id === r.users.id);
+    const profile = mine.find((m: any) => m.kind === "profile")?.summary || "";
+    // Everything the member taught their panda feeds the match (last 6 facts)
+    const facts = mine
+      .filter((m: any) => m.kind === "taught")
+      .slice(-6)
+      .map((m: any) => m.summary)
+      .join(" | ");
     const intent = (intents || []).find((i: any) => i.user_id === r.users.id);
     const handle = r.users.socials?.x?.replace(/^@/, "");
     return {
@@ -55,6 +67,7 @@ export async function loadCohort(eventId: string): Promise<CohortMember[]> {
       lookingFor: "",
       intentLookingFor: intent?.looking_for || null,
       logistics: intent?.logistics || {},
+      facts,
     };
   });
 }
@@ -69,6 +82,7 @@ async function scoreWithCompute(cohort: CohortMember[]): Promise<PairScore[]> {
     name: m.name,
     building: m.building,
     looking_for: m.intentLookingFor || m.lookingFor,
+    about: m.facts || undefined, // taught-to-panda facts sharpen the reasons
     logistics: m.logistics,
   }));
   const res = await client.chat.completions.create({
@@ -100,8 +114,8 @@ function scoreHeuristic(cohort: CohortMember[]): PairScore[] {
       const B = cohort[j];
       const aSeeks = tokens(`${A.intentLookingFor || A.lookingFor}`);
       const bSeeks = tokens(`${B.intentLookingFor || B.lookingFor}`);
-      const aBuilds = tokens(A.building);
-      const bBuilds = tokens(B.building);
+      const aBuilds = tokens(`${A.building} ${A.facts}`);
+      const bBuilds = tokens(`${B.building} ${B.facts}`);
       let score =
         [...aSeeks].filter((t) => bBuilds.has(t)).length * 2 +
         [...bSeeks].filter((t) => aBuilds.has(t)).length * 2 +

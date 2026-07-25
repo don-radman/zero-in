@@ -82,7 +82,7 @@ export default function ConsentTap({
       <button
         onClick={consent}
         disabled={phase === "signing"}
-        className="mt-3 rounded-full bg-[#7C5CFF] px-6 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-40"
+        className="mt-4 w-full rounded-full bg-[#7C5CFF] px-8 py-4 text-lg font-bold shadow-[0_0_30px_rgba(124,92,255,0.4)] hover:opacity-90 disabled:opacity-40"
       >
         {phase === "signing" ? "Sealing..." : "Let my panda hunt"}
       </button>

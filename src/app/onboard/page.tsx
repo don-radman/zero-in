@@ -40,7 +40,7 @@ function PrivyGate({ next }: { next?: string }) {
   if (!authenticated) {
     return (
       <div className="flex flex-col items-center gap-5 py-24 text-center">
-        <h1 className="text-3xl font-bold">Zero in</h1>
+        <h1 className="text-3xl font-bold">Zero-In</h1>
         <p className="max-w-sm opacity-70">
           One email. No wallet, no seed phrase, no gas. Your panda handles the rest.
         </p>
@@ -69,7 +69,7 @@ function DevGate({ next }: { next?: string }) {
   if (!confirmed) {
     return (
       <div className="flex flex-col items-center gap-4 py-24 text-center">
-        <h1 className="text-3xl font-bold">Zero in</h1>
+        <h1 className="text-3xl font-bold">Zero-In</h1>
         <p className="text-xs text-amber-400">dev mode (Privy not configured)</p>
         <input
           value={email}

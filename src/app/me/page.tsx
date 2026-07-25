@@ -80,10 +80,16 @@ export default function MePage() {
             <p className="mt-1 text-xs opacity-50">{nextTier.needed} more to {nextTier.name}</p>
           )}
         </div>
-        <p className="max-w-md text-sm opacity-60">
+        <p className="max-w-md text-sm leading-relaxed opacity-70">
+          This is your panda: a personal AI agent minted as an Agentic ID on 0G.
+          It learns about you privately (memory encrypted, only fingerprints
+          on-chain), hunts the room for your people, and only ever introduces
+          you on a double yes. It works for you, and it answers to you.
+        </p>
+        <p className="max-w-md text-sm opacity-55">
           Gravity is your pull. Show up, connect, follow through, and things get
-          drawn to you: +20 for a patch (+30 flagship), +10 per intro made, +10
-          per debrief, +2 for telling your panda what you seek.
+          drawn to you: +20 for a patch (+30 flagship), +10 per Panda Connection,
+          +10 per pulse, +2 for telling your panda what you seek.
         </p>
         {agent.mint_tx && (
           <a
@@ -106,15 +112,20 @@ export default function MePage() {
             getToken={auth.get}
             onDone={() => load().catch(() => {})}
           />
-        ) : null;
+        ) : (
+          // Debrief waits its turn until the quick pulse is done
+          <DebriefPrompt getToken={auth.get} onDone={() => load().catch(() => {})} />
+        );
       })()}
-      <DebriefPrompt getToken={auth.get} onDone={() => load().catch(() => {})} />
       <SuggestionCards getToken={auth.get} />
 
       <section className="mt-10">
-        <h2 className="mb-3 text-lg font-bold">The suit</h2>
+        <h2 className="mb-3 text-lg font-bold">Your Patches</h2>
         {patches.length === 0 ? (
-          <p className="text-sm opacity-50">No patches yet. Find a tag and zero in.</p>
+          <p className="text-sm opacity-50">
+            No patches yet. Go to an event and Zero-In: tap the tag at the door
+            and your first patch gets sewn on.
+          </p>
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {patches.map((p: any, i: number) => (
@@ -140,10 +151,13 @@ export default function MePage() {
       <TeachPanda getToken={auth.get} onTaught={() => load().catch(() => {})} />
       <SocialsEditor initial={user.socials || {}} getToken={auth.get} />
 
-      <section className="mt-10">
-        <h2 className="mb-1 text-lg font-bold">What my panda knows</h2>
-        <p className="mb-3 text-xs opacity-50">
-          Everything below is stored encrypted; delete anything, any time.
+      <details className="mt-10 rounded-2xl border border-white/10 p-4">
+        <summary className="cursor-pointer text-lg font-bold">
+          What my panda knows <span className="text-sm font-normal opacity-40">({memories.length})</span>
+        </summary>
+        <p className="mb-3 mt-2 text-xs opacity-50">
+          Private to you and your panda; it uses this to find your people.
+          Delete anything, any time.
         </p>
         <ul className="flex flex-col gap-2">
           {memories.map((m: any) => (
@@ -158,7 +172,7 @@ export default function MePage() {
             </li>
           ))}
         </ul>
-      </section>
+      </details>
     </main>
   );
 }
