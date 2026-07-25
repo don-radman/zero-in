@@ -78,3 +78,10 @@ the claim URL that seed/event creation prints.
 Onboard 10-20 real hackers at the venue, write 2 NFC tags, run a match round
 from the host dashboard, confirm intros land on two phones. Sunday morning:
 demo video + submission checklist in `zero-in-build-plan.md` section 8.
+
+## Router endpoint note
+
+Testnet console keys (pc.testnet.0g.ai) authenticate against
+`https://router-api-testnet.integratenetwork.work/v1` (found in the console
+bundle; not in docs). Chat model there: `qwen2.5-omni`. The documented
+`router-api.0g.ai` is MAINNET and rejects testnet keys.
