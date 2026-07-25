@@ -68,7 +68,7 @@ export default function MePage() {
         <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={agent.panda_image_url} alt="Your panda" className="h-56 w-56 rounded-3xl object-cover" />
-          {agent.panda_fallback && (
+          {(agent.panda_fallback || agent.flag_overlay) && (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={flagUrl(user.country || "pt")} alt={user.country} className="absolute -right-2 -top-2 h-8 rounded border-2 border-white shadow" />
           )}

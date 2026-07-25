@@ -125,8 +125,9 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
         <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={result.agent.panda_image_url} alt="Your panda" className="h-64 w-64 rounded-3xl object-cover" />
-          {result.agent.panda_fallback && (
-            // AI portraits include the real flag; overlay only on SVG fallback
+          {(result.agent.panda_fallback || result.agent.flag_overlay) && (
+            // Overlay when the portrait itself has no flag (SVG fallback, or
+            // the AI dropped it and the 0G vision check caught it)
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={flagUrl(country)}

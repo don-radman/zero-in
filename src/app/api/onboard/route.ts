@@ -86,6 +86,7 @@ export async function POST(req: Request) {
         panda_image_url: panda.dataUrl,
         panda_prompt: panda.prompt,
         panda_fallback: panda.kind === "svg",
+        flag_overlay: !!panda.flagMissing,
         mint_tx: mintTx,
       })
       .select()

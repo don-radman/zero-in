@@ -121,9 +121,10 @@ export function bananaPrompt(traits: PandaTraits): string {
     "intelligent, expressive face, visible through a flawless clear visor with realistic reflections, has " +
     "a slight, confident smile and expressive eyes, looking just to the side of the camera. It is in a " +
     "confident three-quarter portrait pose. The panda is wearing a detailed life-support backpack unit, " +
-    "but further customized. Attached to a small, flexible antenna or mount on the upper-right of the " +
-    `backpack is a high-quality fabric mini-flag of ${countryName(traits.country)}, unfurling in the low ` +
-    "gravity and catching the ambient light. On the panda's right shoulder, a dedicated mission patch " +
+    "but further customized. REQUIRED ELEMENT, must be clearly visible: attached to a small, flexible " +
+    "antenna or mount on the upper-right of the backpack is a high-quality fabric mini-flag showing the " +
+    `accurate national flag of ${countryName(traits.country)}, unfurling in the low gravity and catching ` +
+    "the ambient light. On the panda's right shoulder, a dedicated mission patch " +
     "area features a series of three clearly defined, but entirely blank, unadorned, textile-textured " +
     "patches in different shapes (e.g., circular, rectangular, shield). This area is clearly meant for " +
     `future patches. ${gear} ` +
@@ -131,8 +132,41 @@ export function bananaPrompt(traits: PandaTraits): string {
     "hue, shifting across a highly detailed alien, desolate landscape background with distant glowing " +
     "high-tech installations under a gradient sky. Textures are incredibly detailed: Individual fur " +
     "strands visible through the visor, realistic fabric weaves and folds, worn metal and composite " +
-    "materials, and a sense of depth in all objects. No text is rendered on any of the shoulder patches."
+    "materials, and a sense of depth in all objects. No text is rendered on any of the shoulder patches. " +
+    `Do not forget the ${countryName(traits.country)} flag on the backpack: the image is incomplete without it.`
   );
+}
+
+/** Vision check on 0G Compute: is the country flag actually in the portrait?
+ *  Returns true/false, or null when unverifiable (no key, model hiccup). */
+async function flagVisible(b64: string, country: string): Promise<boolean | null> {
+  if (!process.env.ROUTER_API_KEY) return null;
+  try {
+    const client = routerClient();
+    const res = await client.chat.completions.create({
+      model: CHAT_MODEL,
+      max_tokens: 5,
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Does this image contain a small flag of ${country} (on the astronaut's backpack)? Answer with exactly YES or NO.`,
+            },
+            { type: "image_url", image_url: { url: `data:image/png;base64,${b64}` } },
+          ] as any,
+        },
+      ],
+    });
+    const answer = res.choices[0]?.message?.content?.trim().toUpperCase() || "";
+    if (answer.startsWith("YES")) return true;
+    if (answer.startsWith("NO")) return false;
+    return null;
+  } catch (e) {
+    console.error("[panda] flag verification unavailable:", e instanceof Error ? e.message : e);
+    return null;
+  }
 }
 
 const BANANA_MODELS = ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"];
@@ -177,8 +211,8 @@ async function nanoBanana(prompt: string): Promise<string | null> {
 }
 
 export type PandaResult =
-  | { kind: "ai"; dataUrl: string; prompt: string }
-  | { kind: "svg"; dataUrl: string; prompt: string };
+  | { kind: "ai"; dataUrl: string; prompt: string; flagMissing?: boolean }
+  | { kind: "svg"; dataUrl: string; prompt: string; flagMissing?: boolean };
 
 /** Provider chain: Gemini nano banana (preferred) -> 0G Router -> procedural
  *  SVG. Never throws. Portraits are the one non-0G inference (stated openly
@@ -186,8 +220,26 @@ export type PandaResult =
 export async function generatePanda(traits: PandaTraits): Promise<PandaResult> {
   if (process.env.GEMINI_API_KEY) {
     try {
-      const b64 = await nanoBanana(bananaPrompt(traits));
-      if (b64) return { kind: "ai", dataUrl: `data:image/png;base64,${b64}`, prompt: bananaPrompt(traits) };
+      const country = countryName(traits.country);
+      let b64 = await nanoBanana(bananaPrompt(traits));
+      if (b64) {
+        // Verify the flag made it in (vision check on 0G Compute); one retry.
+        let visible = await flagVisible(b64, country);
+        if (visible === false) {
+          console.warn(`[panda] ${country} flag missing, regenerating once`);
+          const retry = await nanoBanana(bananaPrompt(traits)).catch(() => null);
+          if (retry) {
+            b64 = retry;
+            visible = await flagVisible(b64, country);
+          }
+        }
+        return {
+          kind: "ai",
+          dataUrl: `data:image/png;base64,${b64}`,
+          prompt: bananaPrompt(traits),
+          flagMissing: visible === false, // overlay kicks in downstream
+        };
+      }
     } catch (e) {
       console.error("[panda] nano banana failed, trying next provider:", e instanceof Error ? e.message : e);
     }
