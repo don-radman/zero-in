@@ -193,9 +193,9 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
                 )}
                 <button
                   onClick={() => router.push("/me")}
-                  className="mt-1 text-sm underline opacity-50 hover:opacity-90"
+                  className="mt-3 w-full max-w-md rounded-full border-2 border-[#18B8A6] px-8 py-3 font-semibold text-[#5EEAD4] hover:bg-[#18B8A6]/10"
                 >
-                  or go straight to your Panda Dash
+                  Open your Panda Dash: your +10 pulse is waiting
                 </button>
               </>
             ) : (
@@ -203,7 +203,7 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
                 onClick={() => router.push("/me")}
                 className="mt-2 rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90"
               >
-                Open your Panda Dash
+                Open your Panda Dash: your +10 pulse is waiting
               </button>
             )}
           </>

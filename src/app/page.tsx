@@ -80,7 +80,7 @@ export default function Home() {
             [
               "02",
               "Zero-In at events",
-              "Tap the tag at the door. A numbered patch gets sewn onto your suit, on-chain, and your Gravity climbs.",
+              "Every event has a patch station: an NFC tag you tap with your phone, or a rotating QR on the host's screen. One tap claims your numbered patch, sewn onto your suit on-chain, and your Gravity climbs.",
             ],
             [
               "03",

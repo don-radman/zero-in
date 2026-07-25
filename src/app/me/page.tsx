@@ -7,7 +7,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { authedFetch, devMode, getDevEmail } from "@/lib/clientAuth";
 import { flagUrl } from "@/lib/countries";
 import SuggestionCards from "@/components/SuggestionCards";
-import DebriefPrompt from "@/components/DebriefPrompt";
+
 import TeachPanda from "@/components/TeachPanda";
 import SocialsEditor from "@/components/SocialsEditor";
 import PulseCard from "@/components/PulseCard";
@@ -112,10 +112,7 @@ export default function MePage() {
             getToken={auth.get}
             onDone={() => load().catch(() => {})}
           />
-        ) : (
-          // Debrief waits its turn until the quick pulse is done
-          <DebriefPrompt getToken={auth.get} onDone={() => load().catch(() => {})} />
-        );
+        ) : null;
       })()}
       <SuggestionCards getToken={auth.get} />
 
