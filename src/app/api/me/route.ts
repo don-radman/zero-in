@@ -13,20 +13,22 @@ export async function GET(req: Request) {
     const { data: user } = await client.from("users").select("*").eq("email", auth.email).maybeSingle();
     if (!user) return NextResponse.json({ error: "onboard first", code: "NEEDS_ONBOARD" }, { status: 404 });
 
-    const [{ data: agent }, { data: patches }, { data: memories }] = await Promise.all([
+    const [{ data: agent }, { data: patches }, { data: memories }, { data: intents }] = await Promise.all([
       client.from("agents").select("*").eq("user_id", user.id).maybeSingle(),
       client
         .from("patches")
-        .select("edition, claimed_at, tx_hash, pulse, event_id, events:event_id(name, cap, trust_tier, patch_art_url)")
+        .select("edition, claimed_at, tx_hash, pulse, event_id, events:event_id(name, cap, trust_tier, patch_art_url, ask_the_room)")
         .eq("user_id", user.id)
         .order("claimed_at", { ascending: false }),
       client.from("memories").select("id, kind, summary, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
+      client.from("intents").select("event_id, looking_for, logistics, intros_enabled").eq("user_id", user.id),
     ]);
 
     return NextResponse.json({
       user: { email: user.email, country: user.country, wallet: user.wallet, socials: user.socials || {} },
       agent,
       patches: patches || [],
+      intents: intents || [],
       memories: memories || [],
       nextTier: agent ? nextTier(agent.gravity) : null,
     });

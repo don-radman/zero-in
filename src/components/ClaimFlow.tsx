@@ -84,6 +84,13 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
         router.push(`/onboard?next=${encodeURIComponent(`/z/${eventId}?k=${k}`)}`);
         return;
       }
+      if (res.status === 409 && data.code === "ALREADY_CLAIMED") {
+        // Patch already sewn (e.g. earlier attempt on bad wifi): resume.
+        setResult(data);
+        if (data.intentSaved) setIntentState("saved");
+        setPhase("done");
+        return;
+      }
       if (!res.ok) throw new Error(data.error || "claim failed");
       setResult(data);
       setPhase("stars");
@@ -149,8 +156,14 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
     return (
       <div className="flex flex-col items-center gap-4 py-24 text-center">
         <p className="text-red-400">{error}</p>
-        <button onClick={() => router.refresh()} className="text-sm underline opacity-70">
-          try again
+        <button
+          onClick={() => {
+            setError(null);
+            setPhase("ready");
+          }}
+          className="rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90"
+        >
+          Try again
         </button>
       </div>
     );
@@ -173,9 +186,13 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
           <p className="text-5xl font-black">#{result.edition}</p>
           {result.cap > 0 && <p className="mt-1 text-sm opacity-60">of {result.cap}</p>}
         </div>
-        <p className="text-lg">
-          +{result.gained} gravity <span className="opacity-60">(total {result.gravity}, {result.tier})</span>
-        </p>
+        {result.gained > 0 ? (
+          <p className="text-lg">
+            +{result.gained} gravity <span className="opacity-60">(total {result.gravity}, {result.tier})</span>
+          </p>
+        ) : (
+          <p className="text-sm opacity-60">Already sewn on. {result.gravity} gravity, {result.tier}.</p>
+        )}
         {result.tx && (
           <a href={result.tx.explorer} target="_blank" className="text-xs text-[#18B8A6] underline">
             sewn on-chain (view transaction)

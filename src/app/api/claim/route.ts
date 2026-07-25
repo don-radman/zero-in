@@ -39,7 +39,28 @@ export async function POST(req: Request) {
       .eq("user_id", user.id)
       .maybeSingle();
     if (prior) {
-      return NextResponse.json({ error: "already claimed", edition: prior.edition, code: "ALREADY_CLAIMED" }, { status: 409 });
+      // Flaky-wifi recovery: the claim landed server-side but the phone never
+      // saw it. Return everything the client needs to resume where they were.
+      const [{ data: agentRow }, { data: intent }] = await Promise.all([
+        client.from("agents").select("token_id, gravity, tier").eq("user_id", user.id).maybeSingle(),
+        client.from("intents").select("user_id").eq("event_id", eventId).eq("user_id", user.id).maybeSingle(),
+      ]);
+      return NextResponse.json(
+        {
+          code: "ALREADY_CLAIMED",
+          edition: prior.edition,
+          cap: event.cap,
+          eventName: event.name,
+          gravity: agentRow?.gravity ?? 0,
+          tier: agentRow?.tier ?? "Cadet",
+          gained: 0,
+          tx: null,
+          agentTokenId: agentRow?.token_id ?? null,
+          hasTelegram: !!(user.socials && user.socials.telegram),
+          intentSaved: !!intent,
+        },
+        { status: 409 }
+      );
     }
 
     // On-chain claim (edition assigned by the contract); DB-only fallback pre-deploy

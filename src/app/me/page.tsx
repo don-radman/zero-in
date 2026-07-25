@@ -7,7 +7,7 @@ import { usePrivy } from "@privy-io/react-auth";
 import { authedFetch, devMode, getDevEmail } from "@/lib/clientAuth";
 import { flagUrl } from "@/lib/countries";
 import SuggestionCards from "@/components/SuggestionCards";
-
+import PatchAnswers from "@/components/PatchAnswers";
 import TeachPanda from "@/components/TeachPanda";
 import SocialsEditor from "@/components/SocialsEditor";
 import PulseCard from "@/components/PulseCard";
@@ -59,7 +59,7 @@ export default function MePage() {
   if (error) return <main className="p-10 text-center text-red-400">{error}</main>;
   if (!data) return <main className="p-10 text-center opacity-60">Calling your panda...</main>;
 
-  const { agent, user, patches, memories, nextTier } = data;
+  const { agent, user, patches, intents, memories, nextTier } = data;
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-6 py-10">
@@ -139,6 +139,15 @@ export default function MePage() {
                   </p>
                   <p className="mt-1 text-[10px] uppercase tracking-wider opacity-40">{p.events?.trust_tier}-attested</p>
                 </div>
+                <PatchAnswers
+                  eventId={p.event_id}
+                  askTheRoom={p.events?.ask_the_room}
+                  intent={(intents || []).find((it: any) => it.event_id === p.event_id)}
+                  hasTelegram={!!user.socials?.telegram}
+                  agentTokenId={agent.token_id ?? null}
+                  getToken={auth.get}
+                  onSaved={() => load().catch(() => {})}
+                />
               </div>
             ))}
           </div>
