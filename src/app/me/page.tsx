@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { authedFetch, devMode, getDevEmail } from "@/lib/clientAuth";
 import { flagUrl } from "@/lib/countries";
+import SuggestionCards from "@/components/SuggestionCards";
+import DebriefPrompt from "@/components/DebriefPrompt";
 
 function useAuthToken() {
   if (devMode()) {
@@ -82,6 +84,9 @@ export default function MePage() {
           </a>
         )}
       </div>
+
+      <DebriefPrompt getToken={auth.get} onDone={() => load().catch(() => {})} />
+      <SuggestionCards getToken={auth.get} />
 
       <section className="mt-10">
         <h2 className="mb-3 text-lg font-bold">The suit</h2>

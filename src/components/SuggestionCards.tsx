@@ -1,0 +1,76 @@
+"use client";
+// Suggestion cards: person, reason, shared window. Both tap yes -> the intro
+// message lands. Pass = silent expiry ("your panda keeps looking").
+import { useEffect, useState } from "react";
+import { authedFetch } from "@/lib/clientAuth";
+import { flagUrl } from "@/lib/countries";
+
+export default function SuggestionCards({ getToken }: { getToken: () => Promise<string | null> }) {
+  const [cards, setCards] = useState<any[] | null>(null);
+
+  async function load() {
+    const t = await getToken();
+    const res = await authedFetch("/api/suggestions", {}, t);
+    const d = await res.json();
+    if (res.ok) setCards(d.suggestions);
+  }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function respond(id: string, accept: boolean) {
+    const t = await getToken();
+    await authedFetch(`/api/suggestions/${id}/respond`, { method: "POST", body: JSON.stringify({ accept }) }, t);
+    load();
+  }
+
+  if (!cards) return null;
+
+  return (
+    <section className="mt-10">
+      <h2 className="mb-1 text-lg font-bold">Your panda found people</h2>
+      <p className="mb-3 text-xs opacity-50">Intros only happen when both of you say yes.</p>
+      {cards.length === 0 && <p className="text-sm opacity-50">Your panda keeps looking...</p>}
+      <div className="flex flex-col gap-3">
+        {cards.map((c) => (
+          <div key={c.id} className={`rounded-2xl border p-4 ${c.status === "matched" ? "border-[#18B8A6]/50 bg-[#18B8A6]/10" : "border-[#7C5CFF]/40 bg-[#7C5CFF]/5"}`}>
+            <div className="flex items-center gap-2">
+              <p className="font-semibold">{c.other.name}</p>
+              {c.other.country && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={flagUrl(c.other.country)} alt={c.other.country} className="h-4 rounded-sm" />
+              )}
+              <span className="ml-auto text-[10px] uppercase tracking-wider opacity-40">{c.event}</span>
+            </div>
+            {c.other.profile && <p className="mt-1 text-xs opacity-60">{c.other.profile}</p>}
+            <p className="mt-2 text-sm">{c.reason}</p>
+            {c.status === "matched" ? (
+              <div className="mt-3 rounded-xl bg-black/30 p-3">
+                <p className="text-sm">{c.introMessage}</p>
+                {c.other.socials?.x && (
+                  <a href={`https://x.com/${c.other.socials.x.replace(/^@/, "")}`} target="_blank" className="mt-2 inline-block text-xs text-[#18B8A6] underline">
+                    @{c.other.socials.x.replace(/^@/, "")} on X
+                  </a>
+                )}
+              </div>
+            ) : c.iAccepted ? (
+              <p className="mt-3 text-xs opacity-60">You said yes. Waiting for {c.other.name}...</p>
+            ) : (
+              <div className="mt-3 flex gap-3">
+                <button onClick={() => respond(c.id, true)} className="rounded-full bg-[#7C5CFF] px-6 py-2 text-sm font-semibold hover:opacity-90">
+                  Yes, intro us
+                </button>
+                <button onClick={() => respond(c.id, false)} className="rounded-full border border-white/15 px-6 py-2 text-sm opacity-60 hover:opacity-100">
+                  Pass
+                </button>
+              </div>
+            )}
+            {c.window && c.status !== "matched" && <p className="mt-2 text-xs opacity-40">{c.window}</p>}
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
