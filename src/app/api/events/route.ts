@@ -10,7 +10,7 @@ import { patchesAbi } from "@/lib/abi";
 
 export async function POST(req: Request) {
   try {
-    const { name, startsAt, endsAt, cap, askTheRoom, flagship } = await req.json();
+    const { name, startsAt, endsAt, cap, askTheRoom, flagship, patchArtUrl } = await req.json();
     if (!name || !startsAt || !endsAt) {
       return NextResponse.json({ error: "name, startsAt, endsAt required" }, { status: 400 });
     }
@@ -27,6 +27,7 @@ export async function POST(req: Request) {
         cap: cap ?? 0,
         claim_key: claimKey,
         ask_the_room: askTheRoom || null,
+        patch_art_url: patchArtUrl || null,
         flagship: !!flagship,
       })
       .select()

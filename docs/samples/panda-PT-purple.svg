@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="64" fill="#EDE8FF"/>
+  <circle cx="225" cy="39" r="2.4" fill="#7C5CFF" opacity="0.35"/><circle cx="455" cy="78" r="1.7" fill="#7C5CFF" opacity="0.35"/><circle cx="264" cy="85" r="2.2" fill="#7C5CFF" opacity="0.35"/><circle cx="151" cy="177" r="2.4" fill="#7C5CFF" opacity="0.35"/><circle cx="392" cy="119" r="3.5" fill="#7C5CFF" opacity="0.35"/><circle cx="138" cy="169" r="3.0" fill="#7C5CFF" opacity="0.35"/><circle cx="53" cy="98" r="1.7" fill="#7C5CFF" opacity="0.35"/>
+  <!-- backpack + flag pole (real flag overlaid by the app from PT) -->
+  <rect x="330" y="230" width="96" height="130" rx="26" fill="#7C5CFF" opacity="0.9"/>
+  <rect x="398" y="128" width="8" height="120" rx="4" fill="#5b5f6b"/>
+  <rect x="406" y="128" width="64" height="42" rx="6" fill="#fff" stroke="#5b5f6b" stroke-width="3" data-flag-anchor="true"/>
+  <!-- body / suit -->
+  <ellipse cx="246" cy="360" rx="118" ry="104" fill="#ffffff" stroke="#2b2d33" stroke-width="7"/>
+  <ellipse cx="246" cy="378" rx="72" ry="62" fill="#EDE8FF"/>
+  <!-- flag-color trim stripes (country signature) -->
+  <rect x="196" y="300" width="100" height="10" rx="5" fill="#046A38"/>
+  <rect x="196" y="316" width="100" height="10" rx="5" fill="#DA291C" stroke="#2b2d33" stroke-width="0.5"/>
+  <path d="M246 268 l6 12 13 2 -9 9 2 13 -12 -6 -12 6 2 -13 -9 -9 13 -2 z" fill="#F5C518" stroke="#2b2d33" stroke-width="2"/><path d="M150 350 l40 -14 v40 l-40 -14 z" fill="#7C5CFF"/><rect x="188" y="342" width="10" height="28" rx="4" fill="#7C5CFF"/>
+  <!-- arms -->
+  <ellipse cx="140" cy="330" rx="34" ry="52" fill="#2b2d33" transform="rotate(18 140 330)"/>
+  <ellipse cx="352" cy="330" rx="34" ry="52" fill="#2b2d33" transform="rotate(-18 352 330)"/>
+  <!-- head -->
+  <g transform="rotate(1.6 246 178)">
+    <circle cx="156" cy="96" r="38" fill="#2b2d33"/>
+    <circle cx="156" cy="96" r="18" fill="#7C5CFF" opacity="0.55"/>
+    <circle cx="336" cy="96" r="38" fill="#2b2d33"/>
+    <circle cx="336" cy="96" r="18" fill="#7C5CFF" opacity="0.55"/>
+    <circle cx="246" cy="170" r="112" fill="#ffffff" stroke="#2b2d33" stroke-width="7"/>
+    <ellipse cx="196" cy="160" rx="30" ry="38" fill="#2b2d33" transform="rotate(-14 196 160)"/>
+    <ellipse cx="296" cy="160" rx="30" ry="38" fill="#2b2d33" transform="rotate(14 296 160)"/>
+    <circle cx="202" cy="156" r="10" fill="#fff"/>
+    <circle cx="290" cy="156" r="10" fill="#fff"/>
+    <circle cx="204" cy="153" r="4" fill="#2b2d33"/>
+    <circle cx="288" cy="153" r="4" fill="#2b2d33"/>
+    <path d="M236 206 q10 10 20 0" stroke="#2b2d33" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <ellipse cx="246" cy="196" rx="12" ry="8" fill="#2b2d33"/>
+    
+  </g>
+  <!-- helmet ring -->
+  <circle cx="246" cy="170" r="126" fill="none" stroke="#7C5CFF" stroke-width="10" opacity="0.65"/>
+  <line x1="246" y1="40" x2="246" y2="16" stroke="#7C5CFF" stroke-width="6" stroke-linecap="round"/><circle cx="246" cy="12" r="7" fill="#7C5CFF"/>
+</svg>
