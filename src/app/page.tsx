@@ -19,7 +19,7 @@ function stars(count: number) {
 
 export default function Home() {
   return (
-    <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-24 text-center">
+    <main className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-6 py-10 text-center">
       {/* deep space backdrop */}
       <div
         className="pointer-events-none absolute inset-0"
@@ -49,23 +49,26 @@ export default function Home() {
         />
       ))}
 
-      <div className="relative flex min-h-[72vh] flex-col items-center justify-center gap-6">
-        <h1 className="bg-gradient-to-br from-white via-white to-[#7C5CFF] bg-clip-text text-7xl font-black tracking-tight text-transparent sm:text-8xl">
+      <div className="relative flex min-h-[46vh] flex-col items-center justify-center gap-4 pt-6">
+        <h1 className="bg-gradient-to-br from-white via-white to-[#7C5CFF] bg-clip-text text-6xl font-black tracking-tight text-transparent sm:text-7xl">
           ZERO-IN
         </h1>
-        <p className="max-w-xl text-xl font-medium sm:text-2xl">
+        <p className="max-w-xl text-lg font-medium sm:text-xl">
           Claim Patches. Gain Gravity. Attract your People.
         </p>
         <p className="text-sm opacity-40">Zero degrees of separation.</p>
         <Link
           href="/onboard"
-          className="mt-6 rounded-full bg-[#7C5CFF] px-10 py-4 text-lg font-semibold shadow-[0_0_40px_rgba(124,92,255,0.45)] transition hover:scale-[1.03] hover:opacity-95"
+          className="mt-4 rounded-full bg-[#7C5CFF] px-10 py-4 text-lg font-semibold shadow-[0_0_40px_rgba(124,92,255,0.45)] transition hover:scale-[1.03] hover:opacity-95"
         >
           Launch Your Panda
         </Link>
+        <a href="#how" className="mt-3 text-xs uppercase tracking-[0.2em] opacity-40 transition hover:opacity-80">
+          How it works ↓
+        </a>
       </div>
 
-      <section className="relative mx-auto mt-8 w-full max-w-3xl">
+      <section id="how" className="relative mx-auto mt-4 w-full max-w-3xl">
         <h2 className="text-center text-sm uppercase tracking-[0.25em] text-[#7C5CFF]">How it works</h2>
         <div className="mt-6 grid gap-4 text-left sm:grid-cols-2">
           {[
