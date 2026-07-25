@@ -17,12 +17,14 @@ and seeding real humans.
 | RESEND_KEY | https://resend.com | Optional for demo (emails are secondary surface). |
 | STORAGE_MASTER_KEY, CLAIM_HMAC_SECRET | generate locally | `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"` twice. |
 
-**Supabase blocker (needs your decision):** your account is at the 2-active-free-project
-limit (DanAI + setter-desk; I tried creating "zero-in" overnight and it was refused).
-Options: (a) pause DanAI for the weekend (dan-brain is in maintenance mode, next run
-not due), (b) upgrade the Co/Unity org to Pro for the month, (c) teammate's account.
-After creating the project: SQL editor -> paste `supabase/migrations/0001_init.sql`
-(verified green on Postgres 17) -> copy URL + service_role key into .env.
+**Supabase: DONE (Sat morning).** Project `zero-in` (ref xvwgskevjcldaajcvrzg,
+eu-west-3) is live with the migration applied: 7 tables, RLS on. Remaining:
+dashboard -> Project Settings -> API Keys -> copy the service_role (secret) key
+into SUPABASE_SERVICE_ROLE_KEY in .env. URL is already filled in.
+
+**.env: GENERATED (Sat morning)** via `scripts/gen-env.ts`: 4 relayer keys +
+both random secrets + Supabase URL. Check funding progress any time with
+`npx tsx scripts/relayers.ts` (prints addresses + live balances).
 
 ## 2. Spikes (all three green before anything else)
 
