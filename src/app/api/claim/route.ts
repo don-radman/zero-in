@@ -105,6 +105,8 @@ export async function POST(req: Request) {
       tier,
       gained,
       tx: txHash ? { hash: txHash, explorer: explorerTx(txHash) } : null,
+      agentTokenId: agent?.token_id ?? null,
+      hasTelegram: !!(user.socials && user.socials.telegram),
     });
   } catch (e) {
     console.error("[claim]", e);

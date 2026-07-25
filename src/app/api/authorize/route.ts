@@ -19,14 +19,23 @@ export async function GET(req: Request) {
     if (tokenId === null) return NextResponse.json({ error: "tokenId required" }, { status: 400 });
     if (!AGENT_CONTRACT) return NextResponse.json({ error: "contracts not deployed yet" }, { status: 503 });
 
-    const nonce = await publicClient.readContract({
-      address: AGENT_CONTRACT,
-      abi: agentAbi,
-      functionName: "sigNonces",
-      args: [BigInt(tokenId)],
-    });
-    const deadline = Math.floor(Date.now() / 1000) + 3600;
     const user = matcherAddress();
+    const [nonce, alreadyAuthorized] = await Promise.all([
+      publicClient.readContract({
+        address: AGENT_CONTRACT,
+        abi: agentAbi,
+        functionName: "sigNonces",
+        args: [BigInt(tokenId)],
+      }),
+      publicClient.readContract({
+        address: AGENT_CONTRACT,
+        abi: agentAbi,
+        functionName: "isAuthorizedUser",
+        args: [BigInt(tokenId), user],
+      }),
+    ]);
+    if (alreadyAuthorized) return NextResponse.json({ alreadyAuthorized: true, user });
+    const deadline = Math.floor(Date.now() / 1000) + 3600;
 
     return NextResponse.json({
       typedData: {

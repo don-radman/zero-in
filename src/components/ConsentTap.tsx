@@ -26,8 +26,12 @@ export default function ConsentTap({
     try {
       const t = await getToken();
       const res = await authedFetch(`/api/authorize?tokenId=${tokenId}`, {}, t);
-      const { typedData, deadline, user, error: err } = await res.json();
+      const { typedData, deadline, user, alreadyAuthorized, error: err } = await res.json();
       if (!res.ok) throw new Error(err || "could not prepare consent");
+      if (alreadyAuthorized) {
+        setPhase("done");
+        return;
+      }
 
       const wallet = wallets.find((w) => w.walletClientType === "privy") || wallets[0];
       if (!wallet) throw new Error("no wallet available yet, try again in a moment");

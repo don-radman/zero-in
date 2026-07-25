@@ -21,7 +21,11 @@ export type PandaTraits = {
 
 const ACCESSORY_PROMPT: Record<string, string> = {
   builder: "wearing a small utility belt with tiny tools",
+  founder: "with a small gold captain's star pinned on the chest",
   defi: "wearing a sleek holographic visor",
+  vc: "holding a tiny leather briefcase",
+  marketing: "with a small holographic chart floating beside it",
+  operations: "with a neat clipboard and a tiny wrench clipped to the belt",
   artist: "with paint-splash accents on the suit",
   researcher: "holding a small glowing data-pad",
   community: "with a tiny megaphone clipped to the suit",
@@ -44,26 +48,77 @@ function paletteOf(traits: PandaTraits) {
   return PALETTES[traits.palette] || PALETTES.purple;
 }
 
-export function pandaPrompt(traits: PandaTraits): string {
+function accessoryText(traits: PandaTraits): string {
   const accessories = traits.worlds
     .slice(0, 2)
     .map((w) => ACCESSORY_PROMPT[w])
     .filter(Boolean);
   if (traits.worldOther) accessories.push(`with a subtle nod to ${traits.worldOther}`);
-  const accessoryText = accessories.length ? accessories.join(", ") : ACCESSORY_PROMPT.builder;
+  return accessories.length ? accessories.join(", ") : ACCESSORY_PROMPT.builder;
+}
+
+/** Flat-vector prompt (0G Router image models). */
+export function pandaPrompt(traits: PandaTraits): string {
   return (
     "Cute astronaut panda character, flat vector sticker style, centered, facing forward, " +
-    `full body, white background, wearing a space suit with a small backpack, ${accessoryText}, ` +
+    `full body, white background, wearing a space suit with a small backpack, ${accessoryText(traits)}, ` +
     `${traits.vibe} expression, ${paletteOf(traits).accent} accent colors on the suit and fur highlights`
   );
+}
+
+/** Hyper-real wow-factor prompt (Gemini nano banana). Flags stay overlays. */
+export function bananaPrompt(traits: PandaTraits): string {
+  const { accent } = paletteOf(traits);
+  const [trimA, trimB] = FLAG_COLORS[traits.country] || ["#8A93A6", "#EEF1F6"];
+  return (
+    "An adorable baby panda astronaut, hyper-detailed Pixar-quality 3D render, ultra-fluffy fur, " +
+    `huge glossy expressive eyes, joyful ${traits.vibe} expression, wearing a crisp white space suit ` +
+    `with ${accent} accent highlights in the fur tips and suit panels, two thin chest trim stripes ` +
+    `colored ${trimA} and ${trimB}, ${accessoryText(traits)}, compact backpack over one shoulder, ` +
+    "soft cinematic studio lighting, gentle star bokeh background, centered square portrait, " +
+    "shot like a premium character poster, no text, no logos, no flags"
+  );
+}
+
+/** Gemini image generation (nano banana). Returns b64 png or null. */
+async function nanoBanana(prompt: string): Promise<string | null> {
+  const key = process.env.GEMINI_API_KEY;
+  if (!key) return null;
+  const model = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    }
+  );
+  if (!res.ok) throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = await res.json();
+  const parts = data?.candidates?.[0]?.content?.parts || [];
+  for (const p of parts) {
+    const inline = p.inlineData || p.inline_data;
+    if (inline?.data) return inline.data;
+  }
+  return null;
 }
 
 export type PandaResult =
   | { kind: "ai"; dataUrl: string; prompt: string }
   | { kind: "svg"; dataUrl: string; prompt: string };
 
-/** Try Router image gen; fall back to the procedural SVG. Never throws. */
+/** Provider chain: Gemini nano banana (preferred) -> 0G Router -> procedural
+ *  SVG. Never throws. Portraits are the one non-0G inference (stated openly
+ *  in the README); all agent reasoning runs on the 0G Compute Router. */
 export async function generatePanda(traits: PandaTraits): Promise<PandaResult> {
+  if (process.env.GEMINI_API_KEY) {
+    try {
+      const b64 = await nanoBanana(bananaPrompt(traits));
+      if (b64) return { kind: "ai", dataUrl: `data:image/png;base64,${b64}`, prompt: bananaPrompt(traits) };
+    } catch (e) {
+      console.error("[panda] nano banana failed, trying next provider:", e instanceof Error ? e.message : e);
+    }
+  }
   const prompt = pandaPrompt(traits);
   if (process.env.ROUTER_API_KEY) {
     try {
@@ -106,6 +161,10 @@ export function proceduralPanda(traits: PandaTraits): string {
   }).join("");
 
   const ACCESSORY_SVG: Record<string, string> = {
+    founder: `<path d="M246 268 l6 12 13 2 -9 9 2 13 -12 -6 -12 6 2 -13 -9 -9 13 -2 z" fill="#F5C518" stroke="#2b2d33" stroke-width="2"/>`,
+    vc: `<rect x="150" y="352" width="52" height="38" rx="6" fill="#8B5A2B" stroke="#2b2d33" stroke-width="3"/><rect x="168" y="344" width="16" height="10" rx="3" fill="#8B5A2B" stroke="#2b2d33" stroke-width="3"/>`,
+    marketing: `<rect x="316" y="330" width="56" height="44" rx="6" fill="${accent}" opacity="0.85"/><path d="M324 362 l12 -12 10 6 14 -16" stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round"/>`,
+    operations: `<rect x="152" y="342" width="40" height="52" rx="6" fill="#fff" stroke="#2b2d33" stroke-width="3"/><rect x="160" y="338" width="24" height="10" rx="3" fill="${accent}"/><rect x="158" y="356" width="28" height="5" rx="2" fill="${accent}" opacity="0.7"/><rect x="158" y="366" width="28" height="5" rx="2" fill="${accent}" opacity="0.5"/>`,
     builder: `<rect x="180" y="382" width="152" height="22" rx="11" fill="${accent}"/><rect x="216" y="378" width="26" height="30" rx="5" fill="${accent}"/><rect x="270" y="378" width="26" height="30" rx="5" fill="${accent}"/>`,
     defi: `<rect x="176" y="196" width="160" height="34" rx="17" fill="${accent}" opacity="0.55"/>`,
     artist: `<circle cx="200" cy="360" r="9" fill="${accent}"/><circle cx="316" cy="345" r="6" fill="${accent}" opacity="0.7"/><circle cx="240" cy="392" r="5" fill="${accent}" opacity="0.5"/>`,

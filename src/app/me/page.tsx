@@ -8,6 +8,8 @@ import { authedFetch, devMode, getDevEmail } from "@/lib/clientAuth";
 import { flagUrl } from "@/lib/countries";
 import SuggestionCards from "@/components/SuggestionCards";
 import DebriefPrompt from "@/components/DebriefPrompt";
+import TeachPanda from "@/components/TeachPanda";
+import SocialsEditor from "@/components/SocialsEditor";
 
 function useAuthToken() {
   if (devMode()) {
@@ -60,10 +62,11 @@ export default function MePage() {
 
   return (
     <main className="mx-auto w-full max-w-xl flex-1 px-6 py-10">
+      <p className="mb-6 text-center text-sm uppercase tracking-[0.25em] text-[#7C5CFF]">Panda Dash</p>
       <div className="flex flex-col items-center gap-4 text-center">
         <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={agent.panda_image_url} alt="Your panda" className="h-56 w-56 rounded-3xl" />
+          <img src={agent.panda_image_url} alt="Your panda" className="h-56 w-56 rounded-3xl object-cover" />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={flagUrl(user.country || "pt")} alt={user.country} className="absolute -right-2 -top-2 h-8 rounded border-2 border-white shadow" />
         </div>
@@ -74,6 +77,11 @@ export default function MePage() {
             <p className="mt-1 text-xs opacity-50">{nextTier.needed} more to {nextTier.name}</p>
           )}
         </div>
+        <p className="max-w-md text-sm opacity-60">
+          Gravity is your pull. Show up, connect, follow through, and things get
+          drawn to you: +20 for a patch (+30 flagship), +10 per intro made, +10
+          per debrief, +2 for telling your panda what you seek.
+        </p>
         {agent.mint_tx && (
           <a
             href={`${process.env.NEXT_PUBLIC_EXPLORER || "https://chainscan-galileo.0g.ai"}/tx/${agent.mint_tx}`}
@@ -95,18 +103,27 @@ export default function MePage() {
         ) : (
           <div className="grid grid-cols-2 gap-3">
             {patches.map((p: any, i: number) => (
-              <div key={i} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                <p className="font-semibold">{p.events?.name}</p>
-                <p className="text-sm opacity-60">
-                  #{p.edition}
-                  {p.events?.cap ? ` of ${p.events.cap}` : ""}
-                </p>
-                <p className="mt-1 text-[10px] uppercase tracking-wider opacity-40">{p.events?.trust_tier}-attested</p>
+              <div key={i} className="overflow-hidden rounded-xl border border-white/10 bg-white/5">
+                {p.events?.patch_art_url && (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={p.events.patch_art_url} alt={p.events?.name} className="aspect-[3/2] w-full object-cover" />
+                )}
+                <div className="p-3">
+                  <p className="font-semibold">{p.events?.name}</p>
+                  <p className="text-sm opacity-60">
+                    #{p.edition}
+                    {p.events?.cap ? ` of ${p.events.cap}` : ""}
+                  </p>
+                  <p className="mt-1 text-[10px] uppercase tracking-wider opacity-40">{p.events?.trust_tier}-attested</p>
+                </div>
               </div>
             ))}
           </div>
         )}
       </section>
+
+      <TeachPanda getToken={auth.get} onTaught={() => load().catch(() => {})} />
+      <SocialsEditor initial={user.socials || {}} getToken={auth.get} />
 
       <section className="mt-10">
         <h2 className="mb-1 text-lg font-bold">What my panda knows</h2>

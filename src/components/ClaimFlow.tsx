@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { usePrivy } from "@privy-io/react-auth";
 import { authedFetch, devMode, getDevEmail } from "@/lib/clientAuth";
+import ConsentTap from "@/components/ConsentTap";
 
 const EMOJI = ["🔥", "🤝", "🧠", "😴", "🚀"];
 const HEADS_OUT = [
@@ -44,6 +45,8 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
   const [headsOut, setHeadsOut] = useState("");
   const [askRoomAnswer, setAskRoomAnswer] = useState("");
   const [introsEnabled, setIntrosEnabled] = useState(true);
+  const [telegram, setTelegram] = useState("");
+  const [intentError, setIntentError] = useState<string | null>(null);
   const [intentState, setIntentState] = useState<"open" | "saving" | "saved" | "skipped">("open");
 
   useEffect(() => {
@@ -93,6 +96,11 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
   }
 
   async function saveIntent() {
+    setIntentError(null);
+    if (introsEnabled && !result?.hasTelegram && !telegram.trim()) {
+      setIntentError("Intros need a Telegram handle so your intro can reach you.");
+      return;
+    }
     setIntentState("saving");
     try {
       const t = await token.get();
@@ -106,6 +114,7 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
             logistics: headsOut ? { flies_out: headsOut } : {},
             askRoomAnswer: askRoomAnswer.trim() || undefined,
             introsEnabled,
+            telegram: telegram.trim() || undefined,
           }),
         },
         t
@@ -150,13 +159,20 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
         {intentState === "saved" || intentState === "skipped" ? (
           <>
             {intentState === "saved" && introsEnabled && (
-              <p className="text-sm opacity-70">Your panda is on the hunt. Check your suit for intros.</p>
+              <>
+                {result.agentTokenId !== null && result.agentTokenId !== undefined && !devMode() && (
+                  <div className="w-full max-w-md">
+                    <ConsentTap tokenId={result.agentTokenId} getToken={token.get} />
+                  </div>
+                )}
+                <p className="text-sm opacity-70">Your panda is on the hunt. Check your dash for intros.</p>
+              </>
             )}
             <button
               onClick={() => router.push("/me")}
               className="mt-2 rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90"
             >
-              See your suit
+              Open your Panda Dash
             </button>
           </>
         ) : (
@@ -212,6 +228,24 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
                 className="h-5 w-5 accent-[#7C5CFF]"
               />
             </label>
+
+            {introsEnabled && !result.hasTelegram && (
+              <label className="mt-3 block">
+                <span className="text-sm">Telegram handle</span>
+                <input
+                  value={telegram}
+                  onChange={(e) => setTelegram(e.target.value)}
+                  placeholder="@yourhandle"
+                  className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm"
+                />
+                <span className="text-xs opacity-45">
+                  So your intro can actually reach you. Private by default, only
+                  shared after you both say yes.
+                </span>
+              </label>
+            )}
+
+            {intentError && <p className="mt-2 text-sm text-red-400">{intentError}</p>}
 
             <div className="mt-4 flex gap-3">
               <button

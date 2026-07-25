@@ -17,14 +17,14 @@ export async function GET(req: Request) {
       client.from("agents").select("*").eq("user_id", user.id).maybeSingle(),
       client
         .from("patches")
-        .select("edition, claimed_at, tx_hash, events:event_id(name, cap, trust_tier)")
+        .select("edition, claimed_at, tx_hash, events:event_id(name, cap, trust_tier, patch_art_url)")
         .eq("user_id", user.id)
         .order("claimed_at", { ascending: false }),
       client.from("memories").select("id, kind, summary, created_at").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 
     return NextResponse.json({
-      user: { email: user.email, country: user.country, wallet: user.wallet, consentScope: user.consent_scope },
+      user: { email: user.email, country: user.country, wallet: user.wallet, socials: user.socials || {} },
       agent,
       patches: patches || [],
       memories: memories || [],

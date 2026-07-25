@@ -4,16 +4,19 @@
 // moment (claim time), where they have context.
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authedFetch, devMode } from "@/lib/clientAuth";
+import { authedFetch } from "@/lib/clientAuth";
 import { COUNTRIES, flagUrl } from "@/lib/countries";
-import ConsentTap from "@/components/ConsentTap";
 
 const WORLDS = [
   ["builder", "Building / shipping"],
+  ["founder", "Founder"],
   ["defi", "DeFi"],
+  ["vc", "VC / investing"],
+  ["marketing", "Marketing"],
+  ["operations", "Operations"],
+  ["community", "Community / events"],
   ["artist", "Art / design"],
   ["researcher", "Research"],
-  ["community", "Community / events"],
   ["gaming", "Gaming"],
 ] as const;
 
@@ -113,9 +116,6 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
         ) : (
           <p className="text-xs opacity-50">Mint queued (contracts landing soon)</p>
         )}
-        {result.mint?.tokenId !== undefined && result.mint?.tokenId !== null && !devMode() && (
-          <ConsentTap tokenId={result.mint.tokenId} getToken={auth.getAccessToken} />
-        )}
         <button
           onClick={() => router.push(next || "/me")}
           className="mt-2 rounded-full bg-[#7C5CFF] px-8 py-3 font-semibold hover:opacity-90"
@@ -186,7 +186,6 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
             className="rounded-lg border border-white/15 bg-white/5 p-3"
           />
         )}
-        <span className="text-xs opacity-45">Pick as many as fit, or none. Shapes your panda&apos;s gear.</span>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -210,7 +209,7 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
       </div>
 
       <details className="rounded-lg border border-white/10 p-3">
-        <summary className="cursor-pointer text-sm opacity-70">Socials (optional, plain text)</summary>
+        <summary className="cursor-pointer text-sm opacity-70">Socials (optional)</summary>
         <div className="mt-3 flex flex-col gap-2">
           {(["x", "github", "telegram"] as const).map((k) => (
             <input
@@ -221,6 +220,10 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
               className="rounded-lg border border-white/15 bg-white/5 p-2 text-sm"
             />
           ))}
+          <span className="text-xs opacity-45">
+            Private by default: never public, never shown to the host. Only shared
+            with one person at a time, after you BOTH say yes to an intro.
+          </span>
         </div>
       </details>
 
