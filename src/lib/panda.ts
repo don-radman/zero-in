@@ -8,7 +8,7 @@
 // suit trim), world(s) (accessories, up to two), favorite color (fur/suit
 // highlights). Plus a per-member seed for ear tilt, stars, blush, antenna.
 import crypto from "crypto";
-import { routerClient } from "./compute";
+import { routerClient, CHAT_MODEL } from "./compute";
 import { COUNTRIES, FLAG_COLORS } from "./countries";
 
 export type PandaTraits = {
