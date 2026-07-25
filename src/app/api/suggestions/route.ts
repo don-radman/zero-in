@@ -55,6 +55,16 @@ export async function GET(req: Request) {
       const profile = (profiles || []).find((p: any) => p.user_id === otherId)?.summary;
       const mySide = s.user_a === user.id ? "a" : "b";
       const iAccepted = s.status === "matched" || s.status === `${mySide}_yes`;
+      // Contact revealed only on a double yes: Telegram preferred, then their
+      // chosen contact email, then their login email as final fallback.
+      const contact =
+        s.status === "matched"
+          ? other?.socials?.telegram
+            ? { type: "telegram", value: other.socials.telegram.replace(/^@/, "") }
+            : other?.socials?.contact_email
+            ? { type: "email", value: other.socials.contact_email }
+            : { type: "email", value: other?.email }
+          : undefined;
       return {
         id: s.id,
         event: s.eventInfo?.name,
@@ -68,6 +78,7 @@ export async function GET(req: Request) {
           country: other?.country,
           profile,
           socials: s.status === "matched" ? other?.socials : undefined, // socials only after both say yes
+          contact,
         },
       };
     });

@@ -52,11 +52,23 @@ export default function SuggestionCards({ getToken }: { getToken: () => Promise<
             {c.status === "matched" ? (
               <div className="mt-3 rounded-xl bg-black/30 p-3">
                 <p className="text-sm">{c.introMessage}</p>
-                {c.other.socials?.x && (
-                  <a href={`https://x.com/${c.other.socials.x.replace(/^@/, "")}`} target="_blank" className="mt-2 inline-block text-xs text-[#18B8A6] underline">
-                    @{c.other.socials.x.replace(/^@/, "")} on X
-                  </a>
-                )}
+                <div className="mt-2 flex flex-wrap gap-3">
+                  {c.other.contact?.type === "telegram" && (
+                    <a href={`https://t.me/${c.other.contact.value}`} target="_blank" className="text-xs font-semibold text-[#18B8A6] underline">
+                      Message @{c.other.contact.value} on Telegram
+                    </a>
+                  )}
+                  {c.other.contact?.type === "email" && c.other.contact.value && (
+                    <a href={`mailto:${c.other.contact.value}`} className="text-xs font-semibold text-[#18B8A6] underline">
+                      Email {c.other.contact.value}
+                    </a>
+                  )}
+                  {c.other.socials?.x && (
+                    <a href={`https://x.com/${c.other.socials.x.replace(/^@/, "")}`} target="_blank" className="text-xs text-[#18B8A6] underline opacity-70">
+                      @{c.other.socials.x.replace(/^@/, "")} on X
+                    </a>
+                  )}
+                </div>
               </div>
             ) : c.iAccepted ? (
               <p className="mt-3 text-xs opacity-60">You said yes. Waiting for {c.other.name}...</p>

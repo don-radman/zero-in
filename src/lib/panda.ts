@@ -121,10 +121,9 @@ export function bananaPrompt(traits: PandaTraits): string {
     "intelligent, expressive face, visible through a flawless clear visor with realistic reflections, has " +
     "a slight, confident smile and expressive eyes, looking just to the side of the camera. It is in a " +
     "confident three-quarter portrait pose. The panda is wearing a detailed life-support backpack unit, " +
-    "but further customized. REQUIRED ELEMENT, must be clearly visible: attached to a small, flexible " +
-    "antenna or mount on the upper-right of the backpack is a high-quality fabric mini-flag showing the " +
-    `accurate national flag of ${countryName(traits.country)}, unfurling in the low gravity and catching ` +
-    "the ambient light. On the panda's right shoulder, a dedicated mission patch " +
+    "but further customized. Attached to a small, flexible antenna or mount on the upper-right of the " +
+    `backpack is a high-quality fabric mini-flag of ${countryName(traits.country)}, unfurling in the low ` +
+    "gravity and catching the ambient light. On the panda's right shoulder, a dedicated mission patch " +
     "area features a series of three clearly defined, but entirely blank, unadorned, textile-textured " +
     "patches in different shapes (e.g., circular, rectangular, shield). This area is clearly meant for " +
     `future patches. ${gear} ` +
@@ -133,7 +132,7 @@ export function bananaPrompt(traits: PandaTraits): string {
     "high-tech installations under a gradient sky. Textures are incredibly detailed: Individual fur " +
     "strands visible through the visor, realistic fabric weaves and folds, worn metal and composite " +
     "materials, and a sense of depth in all objects. No text is rendered on any of the shoulder patches. " +
-    `Do not forget the ${countryName(traits.country)} flag on the backpack: the image is incomplete without it.`
+    `The ${countryName(traits.country)} flag on the backpack must be clearly visible in the final image.`
   );
 }
 
@@ -145,7 +144,7 @@ async function flagVisible(b64: string, country: string): Promise<boolean | null
     const client = routerClient();
     const res = await client.chat.completions.create({
       model: CHAT_MODEL,
-      max_tokens: 5,
+      max_tokens: 10, // router minimum
       messages: [
         {
           role: "user",
@@ -221,7 +220,13 @@ export async function generatePanda(traits: PandaTraits): Promise<PandaResult> {
   if (process.env.GEMINI_API_KEY) {
     try {
       const country = countryName(traits.country);
-      let b64 = await nanoBanana(bananaPrompt(traits));
+      // One retry after a short breather: transient 429s during signup rushes
+      // must not demote anyone to the procedural fallback.
+      let b64 = await nanoBanana(bananaPrompt(traits)).catch(async (e) => {
+        console.warn("[panda] first nano banana attempt failed, retrying in 4s:", e instanceof Error ? e.message : e);
+        await new Promise((r) => setTimeout(r, 4000));
+        return nanoBanana(bananaPrompt(traits));
+      });
       if (b64) {
         // Verify the flag made it in (vision check on 0G Compute); one retry.
         let visible = await flagVisible(b64, country);

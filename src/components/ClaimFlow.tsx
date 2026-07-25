@@ -11,9 +11,10 @@ import ConsentTap from "@/components/ConsentTap";
 
 const HEADS_OUT = [
   ["", "Not sure yet"],
-  ["saturday", "Tonight"],
-  ["sunday", "Sunday"],
-  ["monday", "Monday"],
+  ["saturday", "Tonight (Sat, Jul 25)"],
+  ["sunday", "Sunday, Jul 26"],
+  ["monday", "Monday, Jul 27"],
+  ["tuesday", "Tuesday, Jul 28"],
   ["later", "Sticking around"],
 ] as const;
 
@@ -44,6 +45,7 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
   const [askRoomAnswer, setAskRoomAnswer] = useState("");
   const [introsEnabled, setIntrosEnabled] = useState(true);
   const [telegram, setTelegram] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [intentError, setIntentError] = useState<string | null>(null);
   const [intentState, setIntentState] = useState<"open" | "saving" | "saved" | "skipped">("open");
 
@@ -103,10 +105,6 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
 
   async function saveIntent() {
     setIntentError(null);
-    if (introsEnabled && !result?.hasTelegram && !telegram.trim()) {
-      setIntentError("Intros need a Telegram handle so your intro can reach you.");
-      return;
-    }
     setIntentState("saving");
     try {
       const t = await token.get();
@@ -121,6 +119,7 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
             askRoomAnswer: askRoomAnswer.trim() || undefined,
             introsEnabled,
             telegram: telegram.trim() || undefined,
+            contactEmail: contactEmail.trim() || undefined,
           }),
         },
         t
@@ -279,19 +278,29 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
             </label>
 
             {introsEnabled && !result.hasTelegram && (
-              <label className="mt-3 block">
-                <span className="text-sm">Telegram handle</span>
-                <input
-                  value={telegram}
-                  onChange={(e) => setTelegram(e.target.value)}
-                  placeholder="@yourhandle"
-                  className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm"
-                />
+              <div className="mt-3">
+                <label className="block">
+                  <span className="text-sm">Telegram handle (best for intros)</span>
+                  <input
+                    value={telegram}
+                    onChange={(e) => setTelegram(e.target.value)}
+                    placeholder="@yourhandle"
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm"
+                  />
+                </label>
+                <label className="mt-2 block">
+                  <span className="text-xs opacity-60">No Telegram? An email works too (optional)</span>
+                  <input
+                    value={contactEmail}
+                    onChange={(e) => setContactEmail(e.target.value)}
+                    placeholder="you@wherever.com"
+                    className="mt-1 w-full rounded-lg border border-white/15 bg-white/5 p-3 text-sm"
+                  />
+                </label>
                 <span className="text-xs opacity-45">
-                  So your intro can actually reach you. Private by default, only
-                  shared after you both say yes.
+                  Private by default, only shared with someone after you both say yes.
                 </span>
-              </label>
+              </div>
             )}
 
             {intentError && <p className="mt-2 text-sm text-red-400">{intentError}</p>}
@@ -348,8 +357,9 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
       </button>
       {token.ready && !token.authed && (
         <p className="max-w-xs text-xs opacity-45">
-          New here? One email gets you your panda, then your patch. Already have
-          a panda? Same button, sign in with the same email.
+          New here? One email gets you your panda, then your patch. Already made
+          your panda (maybe in a different browser)? Sign in with the same
+          email: your panda follows your email, not the browser.
         </p>
       )}
     </div>

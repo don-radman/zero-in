@@ -8,9 +8,10 @@ import ConsentTap from "@/components/ConsentTap";
 
 const HEADS_OUT = [
   ["", "Not sure yet"],
-  ["saturday", "Tonight"],
-  ["sunday", "Sunday"],
-  ["monday", "Monday"],
+  ["saturday", "Tonight (Sat, Jul 25)"],
+  ["sunday", "Sunday, Jul 26"],
+  ["monday", "Monday, Jul 27"],
+  ["tuesday", "Tuesday, Jul 28"],
   ["later", "Sticking around"],
 ] as const;
 
@@ -37,15 +38,12 @@ export default function PatchAnswers({
   const [askRoomAnswer, setAskRoomAnswer] = useState("");
   const [introsEnabled, setIntrosEnabled] = useState(intent ? intent.intros_enabled !== false : true);
   const [telegram, setTelegram] = useState("");
+  const [contactEmail, setContactEmail] = useState("");
   const [state, setState] = useState<"idle" | "saving" | "saved">("idle");
   const [error, setError] = useState<string | null>(null);
 
   async function save() {
     setError(null);
-    if (introsEnabled && !hasTelegram && !telegram.trim()) {
-      setError("Intros need a Telegram handle so your intro can reach you.");
-      return;
-    }
     setState("saving");
     try {
       const t = await getToken();
@@ -60,6 +58,7 @@ export default function PatchAnswers({
             askRoomAnswer: askRoomAnswer.trim() || undefined,
             introsEnabled,
             telegram: telegram.trim() || undefined,
+            contactEmail: contactEmail.trim() || undefined,
           }),
         },
         t
@@ -134,12 +133,20 @@ export default function PatchAnswers({
       </label>
 
       {introsEnabled && !hasTelegram && (
-        <input
-          value={telegram}
-          onChange={(e) => setTelegram(e.target.value)}
-          placeholder="@telegram (so intros reach you)"
-          className="mt-2 w-full rounded-lg border border-white/15 bg-white/5 p-2 text-sm"
-        />
+        <>
+          <input
+            value={telegram}
+            onChange={(e) => setTelegram(e.target.value)}
+            placeholder="@telegram (best for intros)"
+            className="mt-2 w-full rounded-lg border border-white/15 bg-white/5 p-2 text-sm"
+          />
+          <input
+            value={contactEmail}
+            onChange={(e) => setContactEmail(e.target.value)}
+            placeholder="or email (optional)"
+            className="mt-2 w-full rounded-lg border border-white/15 bg-white/5 p-2 text-sm"
+          />
+        </>
       )}
 
       {error && <p className="mt-2 text-xs text-red-400">{error}</p>}

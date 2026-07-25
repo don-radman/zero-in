@@ -5,6 +5,10 @@
 // the mint is backfilled later (keeps the flow demoable pre-deploy).
 import { NextResponse } from "next/server";
 import { keccak256, toBytes, parseEventLogs } from "viem";
+
+// Portrait generation (30s) + retry (4s + 30s) + flag check + mint must all
+// fit; default function duration would cut the retry path short.
+export const maxDuration = 120;
 import { verifyAuth } from "@/lib/privy";
 import { db } from "@/lib/db";
 import { generatePanda } from "@/lib/panda";

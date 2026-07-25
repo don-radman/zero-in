@@ -10,18 +10,26 @@ import { GRAVITY } from "@/lib/gravity";
 export async function POST(req: Request) {
   try {
     const auth = await verifyAuth(req);
-    const { eventId, lookingFor, logistics, askRoomAnswer, introsEnabled, telegram } = await req.json();
+    const { eventId, lookingFor, logistics, askRoomAnswer, introsEnabled, telegram, contactEmail } = await req.json();
     if (!eventId) return NextResponse.json({ error: "eventId required" }, { status: 400 });
 
     const client = db();
     const { data: user } = await client.from("users").select("id, socials").eq("email", auth.email).maybeSingle();
     if (!user) return NextResponse.json({ error: "onboard first", code: "NEEDS_ONBOARD" }, { status: 409 });
 
-    // Telegram handle rides in with the intent (intros need a reachable handle)
+    // Reachable channels ride in with the intent (Telegram preferred, email
+    // fallback; login email is the final fallback at intro time)
+    const socialUpdates: Record<string, string> = {};
     if (telegram && typeof telegram === "string" && telegram.trim()) {
+      socialUpdates.telegram = telegram.trim().replace(/^@/, "");
+    }
+    if (contactEmail && typeof contactEmail === "string" && contactEmail.includes("@")) {
+      socialUpdates.contact_email = contactEmail.trim();
+    }
+    if (Object.keys(socialUpdates).length > 0) {
       await client
         .from("users")
-        .update({ socials: { ...(user.socials || {}), telegram: telegram.trim().replace(/^@/, "") } })
+        .update({ socials: { ...(user.socials || {}), ...socialUpdates } })
         .eq("id", user.id);
     }
 
