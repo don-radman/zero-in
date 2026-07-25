@@ -1,4 +1,16 @@
-# Morning runbook (Saturday)
+# Runbook
+
+## LIVE (Saturday midday)
+
+- **Production:** https://zero-in-three.vercel.app (GitHub pushes to main auto-deploy)
+- **ETHGlobal Lisbon 2026 event** (on-chain id 2, cap 200, flagship, patch art attached):
+  - NFC claim URL: `https://zero-in-three.vercel.app/z/71dcf6ab-86ad-4e52-bd09-6a78471ad9f7?k=gx0GW4WNf9aaM6Lc`
+  - Rotating QR screen: `https://zero-in-three.vercel.app/host/71dcf6ab-86ad-4e52-bd09-6a78471ad9f7/screen`
+  - Host dashboard: `https://zero-in-three.vercel.app/host/71dcf6ab-86ad-4e52-bd09-6a78471ad9f7`
+- Contracts: ZeroInAgent `0xF90Bf0e1Fc1AC8CB97D1e999f1227896b40eC09c`, ZeroInPatches `0x1dc0a41141d28212d12a5A6456eE941A208F5C36`
+- Still pending: Privy allowed origin for the vercel domain (Dan), Gemini billing (Dan), Router key from pc.0g.ai booth (Dan), 8004 registration + Resend (later).
+
+# Morning runbook (Saturday, historical)
 
 State as of the overnight build: the ENTIRE code surface for P0 + P1 is written,
 building, and pushed. 8 contract tests pass. The migration runs green on
