@@ -3,8 +3,9 @@
 // Auth is injected (Privy or dev email) so the flow itself stays identical.
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { authedFetch } from "@/lib/clientAuth";
+import { authedFetch, devMode } from "@/lib/clientAuth";
 import { COUNTRIES, flagUrl } from "@/lib/countries";
+import ConsentTap from "@/components/ConsentTap";
 
 const INTERESTS = [
   ["builder", "Building / shipping"],
@@ -116,6 +117,9 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
           </a>
         ) : (
           <p className="text-xs opacity-50">Mint queued (contracts landing soon)</p>
+        )}
+        {result.mint?.tokenId !== undefined && result.mint?.tokenId !== null && !devMode() && (
+          <ConsentTap tokenId={result.mint.tokenId} getToken={auth.getAccessToken} />
         )}
         <button
           onClick={() => router.push(next || "/me")}
