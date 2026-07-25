@@ -338,8 +338,20 @@ export default function ClaimFlow({ eventId, k }: { eventId: string; k?: string 
         disabled={phase === "claiming" || !token.ready}
         className="rounded-full bg-[#7C5CFF] px-10 py-4 text-lg font-semibold hover:opacity-90 disabled:opacity-40"
       >
-        {phase === "claiming" ? "Sewing your patch..." : "Claim your patch"}
+        {phase === "claiming"
+          ? "Sewing your patch..."
+          : !token.ready
+          ? "Waking your panda..."
+          : token.authed
+          ? "Claim your patch"
+          : "Launch your Panda and claim"}
       </button>
+      {token.ready && !token.authed && (
+        <p className="max-w-xs text-xs opacity-45">
+          New here? One email gets you your panda, then your patch. Already have
+          a panda? Same button, sign in with the same email.
+        </p>
+      )}
     </div>
   );
 }
