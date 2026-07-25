@@ -2,7 +2,7 @@
 // Onboarding: three light questions (country, world, favorite color) then the
 // launch. "What are you looking for" and intro consent moved to the zero-in
 // moment (claim time), where they have context.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { authedFetch } from "@/lib/clientAuth";
 import { COUNTRIES, flagUrl } from "@/lib/countries";
@@ -37,6 +37,32 @@ export type OnboardAuth = {
   getAccessToken: () => Promise<string | null>;
   email: string | null;
 };
+
+const SUITING_LINES = [
+  "Your panda is suiting up...",
+  "Stitching the suit in your color...",
+  "Calibrating the visor...",
+  "Raising your flag...",
+  "Packing the mission backpack...",
+  "Reserving blank patch slots on the shoulder...",
+  "Final checks. Almost there...",
+];
+
+function SuitingUp() {
+  const [line, setLine] = useState(0);
+  // Portrait generation takes ~30s; keep the wait alive.
+  useEffect(() => {
+    const t = setInterval(() => setLine((l) => (l + 1) % SUITING_LINES.length), 4500);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <div className="flex flex-col items-center gap-6 py-24 text-center">
+      <div className="h-24 w-24 animate-pulse rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#18B8A6]" />
+      <p className="text-lg opacity-80">{SUITING_LINES[line]}</p>
+      <p className="text-xs opacity-40">Every panda is generated once, just for you. Worth the ~30 seconds.</p>
+    </div>
+  );
+}
 
 export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: string }) {
   const router = useRouter();
@@ -86,12 +112,7 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
   }
 
   if (step === "hatching") {
-    return (
-      <div className="flex flex-col items-center gap-6 py-24 text-center">
-        <div className="h-24 w-24 animate-pulse rounded-full bg-gradient-to-br from-[#7C5CFF] to-[#18B8A6]" />
-        <p className="text-lg opacity-80">Your panda is suiting up...</p>
-      </div>
-    );
+    return <SuitingUp />;
   }
 
   if (step === "hatched" && result) {
@@ -101,13 +122,16 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
         <h1 className="text-3xl font-bold">Your panda has launched</h1>
         <div className="relative">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={result.agent.panda_image_url} alt="Your panda" className="h-64 w-64 rounded-3xl" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={flagUrl(country)}
-            alt={country}
-            className="absolute -right-2 -top-2 h-8 rounded border-2 border-white shadow"
-          />
+          <img src={result.agent.panda_image_url} alt="Your panda" className="h-64 w-64 rounded-3xl object-cover" />
+          {result.agent.panda_fallback && (
+            // AI portraits include the real flag; overlay only on SVG fallback
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={flagUrl(country)}
+              alt={country}
+              className="absolute -right-2 -top-2 h-8 rounded border-2 border-white shadow"
+            />
+          )}
         </div>
         {result.mint ? (
           <a href={result.mint.explorer} target="_blank" className="text-xs text-[#18B8A6] underline">

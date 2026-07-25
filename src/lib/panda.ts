@@ -9,7 +9,7 @@
 // highlights). Plus a per-member seed for ear tilt, stars, blush, antenna.
 import crypto from "crypto";
 import { routerClient } from "./compute";
-import { FLAG_COLORS } from "./countries";
+import { COUNTRIES, FLAG_COLORS } from "./countries";
 
 export type PandaTraits = {
   country: string; // ISO 3166-1 alpha-2
@@ -66,40 +66,113 @@ export function pandaPrompt(traits: PandaTraits): string {
   );
 }
 
-/** Hyper-real wow-factor prompt (Gemini nano banana). Flags stay overlays. */
+// Dan's prompt (tested in Gemini, Sat afternoon). Placeholders substituted per
+// member: [PRIMARY_COLOR], [COUNTRY], and a gear block per field of work.
+const COLOR_PHRASE: Record<string, string> = {
+  red: "deep crimson red",
+  orange: "warm sunset orange",
+  yellow: "rich golden yellow",
+  green: "deep emerald green",
+  teal: "vivid teal",
+  blue: "royal cobalt blue",
+  purple: "deep violet purple",
+  pink: "bold magenta pink",
+  silver: "polished platinum silver",
+};
+
+// Gear per world, in the same descriptive register as Dan's three originals
+// (artist=CREATOR, gaming=GAMING, founder=FOUNDER kept verbatim).
+const GEAR: Record<string, string> = {
+  artist:
+    "The panda's gloved paws hold a professional-grade mirrorless camera with a prominent lens, slung over one shoulder with a detailed strap, while a sophisticated artist's paintbrush is tucked into a utility loop on its chest harness.",
+  gaming:
+    "A futuristic, sleek, ergonomic game controller with backlit buttons is held casually but prominently in the panda's paws.",
+  founder:
+    "A sleek, high-tech, custom-designed mini-laptop (maybe with a unique transparent or E-Ink display showing complex data) is attached to the front-left chest console of the suit via a small articulated mount, with its glowing interface prominent.",
+  builder:
+    "A rugged modular tool gauntlet wraps the panda's left forearm, with precision instruments seated in worn sockets and a faint holographic schematic projected just above it.",
+  defi:
+    "A wrist-mounted holographic console projects translucent market charts and flowing token streams above the panda's left paw, its glow reflecting subtly in the visor.",
+  vc:
+    "A slim, luxurious attache case in brushed titanium rests in the panda's right paw, a discreet holographic ticker of portfolio constellations shimmering along its edge.",
+  marketing:
+    "A compact holographic display hovers beside the panda's shoulder, projecting an ascending glowing chart, while a sleek broadcast bead-microphone arcs from the helmet rim.",
+  operations:
+    "A chest-mounted mission checklist tablet glows with neatly ordered status lines, and a precision multi-tool is clipped to a webbed utility strap across the suit.",
+  community:
+    "A refined comm-array unit with a small speaker horn is mounted on the chest harness, soft soundwave lines etched into its casing, hinting at a voice that gathers crowds.",
+  researcher:
+    "The panda cradles a translucent data-slate dense with annotated diagrams, a compact sensor wand holstered at its hip still faintly glowing from recent use.",
+};
+
+function countryName(code: string): string {
+  return COUNTRIES.find(([c]) => c === code)?.[1] || code;
+}
+
+/** Hyper-real PFP prompt (Dan's, verbatim with substitutions). */
 export function bananaPrompt(traits: PandaTraits): string {
-  const { accent } = paletteOf(traits);
-  const [trimA, trimB] = FLAG_COLORS[traits.country] || ["#8A93A6", "#EEF1F6"];
+  const color = COLOR_PHRASE[traits.palette] || COLOR_PHRASE.purple;
+  const gear = GEAR[traits.worlds[0]] || GEAR.builder;
   return (
-    "An adorable baby panda astronaut, hyper-detailed Pixar-quality 3D render, ultra-fluffy fur, " +
-    `huge glossy expressive eyes, joyful ${traits.vibe} expression, wearing a crisp white space suit ` +
-    `with ${accent} accent highlights in the fur tips and suit panels, two thin chest trim stripes ` +
-    `colored ${trimA} and ${trimB}, ${accessoryText(traits)}, compact backpack over one shoulder, ` +
-    "soft cinematic studio lighting, gentle star bokeh background, centered square portrait, " +
-    "shot like a premium character poster, no text, no logos, no flags"
+    "A hyper-realistic, photorealistic portrait profile picture (PFP) of a sophisticated anthropomorphic " +
+    "giant panda, but a more baby faced cute younger version, in a full, highly detailed astronaut suit. " +
+    `The suit's primary fabric and panel components are colored in ${color}, with secondary accents in ` +
+    "brushed metallic silver and grey, and subtle, integrated light purple-blue light piping. The panda's " +
+    "intelligent, expressive face, visible through a flawless clear visor with realistic reflections, has " +
+    "a slight, confident smile and expressive eyes, looking just to the side of the camera. It is in a " +
+    "confident three-quarter portrait pose. The panda is wearing a detailed life-support backpack unit, " +
+    "but further customized. Attached to a small, flexible antenna or mount on the upper-right of the " +
+    `backpack is a high-quality fabric mini-flag of ${countryName(traits.country)}, unfurling in the low ` +
+    "gravity and catching the ambient light. On the panda's right shoulder, a dedicated mission patch " +
+    "area features a series of three clearly defined, but entirely blank, unadorned, textile-textured " +
+    "patches in different shapes (e.g., circular, rectangular, shield). This area is clearly meant for " +
+    `future patches. ${gear} ` +
+    "The entire scene is bathed in pervasive, atmospheric light with a distinct magenta and light-purple " +
+    "hue, shifting across a highly detailed alien, desolate landscape background with distant glowing " +
+    "high-tech installations under a gradient sky. Textures are incredibly detailed: Individual fur " +
+    "strands visible through the visor, realistic fabric weaves and folds, worn metal and composite " +
+    "materials, and a sense of depth in all objects. No text is rendered on any of the shoulder patches."
   );
 }
 
-/** Gemini image generation (nano banana). Returns b64 png or null. */
+const BANANA_MODELS = ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"];
+
+/** Gemini image generation (nano banana). Tries the strongest model first. */
 async function nanoBanana(prompt: string): Promise<string | null> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
-  const model = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
-  const res = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-    {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+  const models = process.env.GEMINI_IMAGE_MODEL
+    ? [process.env.GEMINI_IMAGE_MODEL, ...BANANA_MODELS.filter((m) => m !== process.env.GEMINI_IMAGE_MODEL)]
+    : BANANA_MODELS;
+
+  let lastError: unknown = null;
+  for (const model of models) {
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+        {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+        }
+      );
+      if (!res.ok) {
+        lastError = new Error(`gemini ${model} ${res.status}: ${(await res.text()).slice(0, 160)}`);
+        console.error("[panda]", (lastError as Error).message);
+        continue;
+      }
+      const data = await res.json();
+      const parts = data?.candidates?.[0]?.content?.parts || [];
+      for (const p of parts) {
+        const inline = p.inlineData || p.inline_data;
+        if (inline?.data) return inline.data;
+      }
+      lastError = new Error(`gemini ${model}: no image in response`);
+    } catch (e) {
+      lastError = e;
     }
-  );
-  if (!res.ok) throw new Error(`gemini ${res.status}: ${(await res.text()).slice(0, 200)}`);
-  const data = await res.json();
-  const parts = data?.candidates?.[0]?.content?.parts || [];
-  for (const p of parts) {
-    const inline = p.inlineData || p.inline_data;
-    if (inline?.data) return inline.data;
   }
+  if (lastError) throw lastError;
   return null;
 }
 
