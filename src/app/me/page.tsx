@@ -27,6 +27,17 @@ export default function MePage() {
   const auth = useAuthToken();
   const [data, setData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
+  const [upgrading, setUpgrading] = useState(false);
+
+  async function upgradePortrait() {
+    setUpgrading(true);
+    try {
+      const t = await auth.get();
+      await authedFetch("/api/portrait", { method: "POST", body: "{}" }, t);
+      await load();
+    } catch {}
+    setUpgrading(false);
+  }
 
   async function load() {
     const t = await auth.get();
@@ -73,6 +84,15 @@ export default function MePage() {
             <img src={flagUrl(user.country || "pt")} alt={user.country} className="absolute -right-2 -top-2 h-8 rounded border-2 border-white shadow" />
           )}
         </div>
+        {agent.panda_fallback && (
+          <button
+            onClick={upgradePortrait}
+            disabled={upgrading}
+            className="rounded-full border border-[#7C5CFF] px-6 py-2 text-sm font-semibold text-[#B7A5FF] hover:bg-[#7C5CFF]/10 disabled:opacity-40"
+          >
+            {upgrading ? "Rendering your portrait (~30s)..." : "Upgrade to my full portrait"}
+          </button>
+        )}
         <div>
           <p className="text-sm uppercase tracking-widest text-[#7C5CFF]">{agent.tier}</p>
           <p className="text-4xl font-black">{agent.gravity} <span className="text-lg font-medium opacity-50">gravity</span></p>

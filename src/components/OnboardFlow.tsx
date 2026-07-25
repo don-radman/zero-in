@@ -87,6 +87,7 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
     setError(null);
     setStep("hatching");
     try {
+      // Phase 1: fast account creation (seconds; instant scout panda + mint)
       const token = await auth.getAccessToken();
       const res = await authedFetch(
         "/api/onboard",
@@ -105,7 +106,27 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "launch failed");
-      setResult(data);
+
+      // Phase 2: photoreal portrait (long, retryable; scout panda covers any failure)
+      if (data.agent?.panda_fallback) {
+        for (let attempt = 0; attempt < 2; attempt++) {
+          try {
+            const t2 = await auth.getAccessToken();
+            const p = await authedFetch("/api/portrait", { method: "POST", body: "{}" }, t2);
+            const pd = await p.json();
+            if (p.ok && pd.upgraded) {
+              data.agent = { ...data.agent, panda_image_url: pd.dataUrl, panda_fallback: false, flag_overlay: pd.flagOverlay };
+              if (pd.mint && !data.mint) data.mint = pd.mint;
+              break;
+            }
+            if (p.ok && pd.alreadyPhotoreal) break;
+          } catch {
+            // network blip mid-portrait: scout panda stands in; try once more
+          }
+        }
+      }
+
+      setResult({ ...data });
       setStep("hatched");
     } catch (e) {
       setError(e instanceof Error ? e.message : "something went wrong");
@@ -141,7 +162,13 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
             Agentic ID minted on 0G (view transaction)
           </a>
         ) : (
-          <p className="text-xs opacity-50">Mint queued (contracts landing soon)</p>
+          <p className="text-xs opacity-50">Mint finishing up in the background</p>
+        )}
+        {result.agent?.panda_fallback && (
+          <p className="max-w-xs text-xs opacity-55">
+            This is your scout panda. Your full portrait is still rendering:
+            upgrade it any time from your Panda Dash.
+          </p>
         )}
         <button
           onClick={() => router.push(next || "/me")}
