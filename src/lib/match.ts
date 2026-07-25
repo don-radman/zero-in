@@ -156,8 +156,20 @@ export async function runMatch(eventId: string): Promise<{ created: number; coho
     try {
       scored = await scoreWithCompute(cohort);
     } catch (e) {
-      console.error("[match] compute scoring failed, using heuristic:", e instanceof Error ? e.message : e);
-      scored = scoreHeuristic(cohort);
+      const msg = e instanceof Error ? e.message : String(e);
+      if (msg.toLowerCase().includes("rate limit")) {
+        // Testnet router rate window: one patient retry before falling back
+        console.warn("[match] router rate-limited, retrying in 20s");
+        await new Promise((r) => setTimeout(r, 20_000));
+        try {
+          scored = await scoreWithCompute(cohort);
+        } catch {
+          scored = scoreHeuristic(cohort);
+        }
+      } else {
+        console.error("[match] compute scoring failed, using heuristic:", msg);
+        scored = scoreHeuristic(cohort);
+      }
     }
   } else {
     scored = scoreHeuristic(cohort);
