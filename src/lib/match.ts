@@ -62,7 +62,8 @@ export async function loadCohort(eventId: string): Promise<CohortMember[]> {
       .map((m: any) => m.summary)
       .join(" | ");
     const intent = (intents || []).find((i: any) => i.user_id === r.users.id);
-    const handle = r.users.socials?.x?.replace(/^@/, "");
+    const handle =
+      r.users.socials?.telegram?.replace(/^@/, "") || r.users.socials?.x?.replace(/^@/, "");
     return {
       userId: r.users.id,
       name: handle || r.users.email.split("@")[0],

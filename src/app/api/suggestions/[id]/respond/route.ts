@@ -44,7 +44,12 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const { data: people } = await client.from("users").select("id, email, socials").in("id", [initiatorId, otherId]);
     const nameOf = (uid: string) => {
       const p = (people || []).find((x: any) => x.id === uid);
-      return p?.socials?.x?.replace(/^@/, "") || p?.email?.split("@")[0] || "someone";
+      return (
+        p?.socials?.telegram?.replace(/^@/, "") ||
+        p?.socials?.x?.replace(/^@/, "") ||
+        p?.email?.split("@")[0] ||
+        "someone"
+      );
     };
 
     const introMessage = await generateIntro({

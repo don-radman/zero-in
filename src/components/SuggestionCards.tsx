@@ -7,6 +7,7 @@ import { flagUrl } from "@/lib/countries";
 
 export default function SuggestionCards({ getToken }: { getToken: () => Promise<string | null> }) {
   const [cards, setCards] = useState<any[] | null>(null);
+  const [respondingId, setRespondingId] = useState<string | null>(null);
 
   async function load() {
     const t = await getToken();
@@ -21,9 +22,15 @@ export default function SuggestionCards({ getToken }: { getToken: () => Promise<
   }, []);
 
   async function respond(id: string, accept: boolean) {
-    const t = await getToken();
-    await authedFetch(`/api/suggestions/${id}/respond`, { method: "POST", body: JSON.stringify({ accept }) }, t);
-    load();
+    if (respondingId) return; // no double-taps
+    setRespondingId(id);
+    try {
+      const t = await getToken();
+      await authedFetch(`/api/suggestions/${id}/respond`, { method: "POST", body: JSON.stringify({ accept }) }, t);
+      await load();
+    } finally {
+      setRespondingId(null);
+    }
   }
 
   if (!cards) return null;
@@ -73,11 +80,22 @@ export default function SuggestionCards({ getToken }: { getToken: () => Promise<
             ) : c.iAccepted ? (
               <p className="mt-3 text-xs opacity-60">You said yes. Waiting for {c.other.name}...</p>
             ) : (
-              <div className="mt-3 flex gap-3">
-                <button onClick={() => respond(c.id, true)} className="rounded-full bg-[#7C5CFF] px-6 py-2 text-sm font-semibold hover:opacity-90">
-                  Yes, intro us
+              <div className="mt-3 flex items-center gap-3">
+                <button
+                  onClick={() => respond(c.id, true)}
+                  disabled={respondingId !== null}
+                  className="flex items-center gap-2 rounded-full bg-[#7C5CFF] px-6 py-2 text-sm font-semibold hover:opacity-90 disabled:opacity-50"
+                >
+                  {respondingId === c.id && (
+                    <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                  )}
+                  {respondingId === c.id ? "Sending your yes..." : "Yes, intro us"}
                 </button>
-                <button onClick={() => respond(c.id, false)} className="rounded-full border border-white/15 px-6 py-2 text-sm opacity-60 hover:opacity-100">
+                <button
+                  onClick={() => respond(c.id, false)}
+                  disabled={respondingId !== null}
+                  className="rounded-full border border-white/15 px-6 py-2 text-sm opacity-60 hover:opacity-100 disabled:opacity-30"
+                >
                   Pass
                 </button>
               </div>

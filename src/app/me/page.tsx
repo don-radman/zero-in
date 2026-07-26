@@ -15,11 +15,18 @@ import PulseCard from "@/components/PulseCard";
 function useAuthToken() {
   if (devMode()) {
     // eslint-disable-next-line react-hooks/rules-of-hooks
-    return { ready: true, authed: !!getDevEmail(), get: async () => null as string | null };
+    return {
+      ready: true,
+      authed: !!getDevEmail(),
+      get: async () => null as string | null,
+      logout: async () => {
+        window.localStorage.removeItem("zeroin.devEmail");
+      },
+    };
   }
   // eslint-disable-next-line react-hooks/rules-of-hooks
-  const { ready, authenticated, getAccessToken } = usePrivy();
-  return { ready, authed: authenticated, get: getAccessToken };
+  const { ready, authenticated, getAccessToken, logout } = usePrivy();
+  return { ready, authed: authenticated, get: getAccessToken, logout };
 }
 
 export default function MePage() {
@@ -199,6 +206,18 @@ export default function MePage() {
           ))}
         </ul>
       </details>
+
+      <div className="mt-12 text-center">
+        <button
+          onClick={async () => {
+            await auth.logout();
+            router.push("/");
+          }}
+          className="text-xs opacity-30 hover:opacity-70"
+        >
+          log out
+        </button>
+      </div>
     </main>
   );
 }

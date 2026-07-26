@@ -74,7 +74,11 @@ export async function GET(req: Request) {
         window: s.time_window,
         introMessage: s.status === "matched" ? s.intro_message : null,
         other: {
-          name: other?.socials?.x?.replace(/^@/, "") || other?.email?.split("@")[0] || "someone",
+          name:
+            other?.socials?.telegram?.replace(/^@/, "") ||
+            other?.socials?.x?.replace(/^@/, "") ||
+            other?.email?.split("@")[0] ||
+            "someone",
           country: other?.country,
           profile,
           socials: s.status === "matched" ? other?.socials : undefined, // socials only after both say yes
