@@ -10,6 +10,10 @@ export function routerClient() {
   return new OpenAI({
     apiKey,
     baseURL: process.env.ROUTER_BASE_URL || "https://router-api.0g.ai/v1",
+    // Testnet router rate-limits under load; fail fast and let callers fall
+    // back instead of the SDK's default 10-minute timeout + backoff retries.
+    timeout: 30_000,
+    maxRetries: 0,
   });
 }
 
