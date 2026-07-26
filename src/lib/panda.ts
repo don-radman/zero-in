@@ -136,41 +136,13 @@ export function bananaPrompt(traits: PandaTraits): string {
   );
 }
 
-/** Vision check on 0G Compute: is the country flag actually in the portrait?
- *  Returns true/false, or null when unverifiable (no key, model hiccup). */
-async function flagVisible(b64: string, country: string): Promise<boolean | null> {
-  if (!process.env.ROUTER_API_KEY) return null;
-  try {
-    const client = routerClient();
-    const res = await client.chat.completions.create({
-      model: CHAT_MODEL,
-      max_tokens: 10, // router minimum
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: `Does this image contain a small flag of ${country} (on the astronaut's backpack)? Answer with exactly YES or NO.`,
-            },
-            { type: "image_url", image_url: { url: `data:image/png;base64,${b64}` } },
-          ] as any,
-        },
-      ],
-    });
-    const answer = res.choices[0]?.message?.content?.trim().toUpperCase() || "";
-    if (answer.startsWith("YES")) return true;
-    if (answer.startsWith("NO")) return false;
-    return null;
-  } catch (e) {
-    console.error("[panda] flag verification unavailable:", e instanceof Error ? e.message : e);
-    return null;
-  }
-}
 
-const BANANA_MODELS = ["gemini-3-pro-image-preview", "gemini-2.5-flash-image"];
+// Flash-image (the classic nano banana) first: fast and reliable; Pro second
+// (higher fidelity but its preview endpoint has been observed to hang).
+const BANANA_MODELS = ["gemini-2.5-flash-image", "gemini-3-pro-image-preview"];
+const BANANA_TIMEOUT_MS = 45_000;
 
-/** Gemini image generation (nano banana). Tries the strongest model first. */
+/** Gemini image generation (nano banana), hard timeout per model attempt. */
 async function nanoBanana(prompt: string): Promise<string | null> {
   const key = process.env.GEMINI_API_KEY;
   if (!key) return null;
@@ -187,6 +159,7 @@ async function nanoBanana(prompt: string): Promise<string | null> {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+          signal: AbortSignal.timeout(BANANA_TIMEOUT_MS),
         }
       );
       if (!res.ok) {
@@ -219,30 +192,18 @@ export type PandaResult =
 export async function generatePanda(traits: PandaTraits): Promise<PandaResult> {
   if (process.env.GEMINI_API_KEY) {
     try {
-      const country = countryName(traits.country);
       // One retry after a short breather: transient 429s during signup rushes
       // must not demote anyone to the procedural fallback.
-      let b64 = await nanoBanana(bananaPrompt(traits)).catch(async (e) => {
+      const b64 = await nanoBanana(bananaPrompt(traits)).catch(async (e) => {
         console.warn("[panda] first nano banana attempt failed, retrying in 4s:", e instanceof Error ? e.message : e);
         await new Promise((r) => setTimeout(r, 4000));
         return nanoBanana(bananaPrompt(traits));
       });
       if (b64) {
-        // Verify the flag made it in (vision check on 0G Compute); one retry.
-        let visible = await flagVisible(b64, country);
-        if (visible === false) {
-          console.warn(`[panda] ${country} flag missing, regenerating once`);
-          const retry = await nanoBanana(bananaPrompt(traits)).catch(() => null);
-          if (retry) {
-            b64 = retry;
-            visible = await flagVisible(b64, country);
-          }
-        }
         return {
           kind: "ai",
           dataUrl: `data:image/png;base64,${b64}`,
           prompt: bananaPrompt(traits),
-          flagMissing: visible === false, // overlay kicks in downstream
         };
       }
     } catch (e) {
