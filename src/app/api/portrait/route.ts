@@ -49,11 +49,43 @@ export async function POST(req: Request) {
       }
     }
 
-    // Already photoreal? Nothing to do.
+    // Heal the encrypted memory root on 0G Storage: only when this call has
+    // no portrait to render (keeps each call comfortably inside its budget).
+    let memoryRoot: string | null = agent.memory_root;
+    if (!agent.panda_fallback && !memoryRoot) {
+      try {
+        const { data: mems } = await client
+          .from("memories")
+          .select("kind, summary, created_at")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: true });
+        const { uploadMemoryBlob } = await import("@/lib/storage");
+        memoryRoot = await uploadMemoryBlob(user.id, {
+          v: 1,
+          country: user.country,
+          memories: mems || [],
+          exportedAt: new Date().toISOString(),
+        });
+        await client.from("agents").update({ memory_root: memoryRoot }).eq("user_id", user.id);
+        if (tokenId !== null && AGENT_CONTRACT && process.env.RELAYER_KEYS) {
+          await relayerWrite({
+            address: AGENT_CONTRACT,
+            abi: agentAbi,
+            functionName: "appendIntelligentData",
+            args: [BigInt(tokenId), { dataDescription: "memory_root", dataHash: memoryRoot as `0x${string}` }],
+          }).catch((e) => console.error("[portrait] memory_root append deferred:", e?.message));
+        }
+      } catch (e) {
+        console.error("[portrait] storage heal deferred:", e instanceof Error ? e.message : e);
+      }
+    }
+
+    // Already photoreal? Nothing else to do.
     if (!agent.panda_fallback) {
       return NextResponse.json({
         upgraded: false,
         alreadyPhotoreal: true,
+        memoryRoot,
         mint: mintTx ? { tx: mintTx, explorer: explorerTx(mintTx), tokenId: tokenId?.toString() ?? null } : null,
       });
     }

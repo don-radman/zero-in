@@ -128,6 +128,12 @@ export default function OnboardFlow({ auth, next }: { auth: OnboardAuth; next?: 
 
       setResult({ ...data });
       setStep("hatched");
+      // Background heal: pushes the encrypted memory root to 0G Storage now
+      // that the portrait is settled (fire and forget; backfill covers misses)
+      auth
+        .getAccessToken()
+        .then((t3) => authedFetch("/api/portrait", { method: "POST", body: "{}" }, t3))
+        .catch(() => {});
     } catch (e) {
       setError(e instanceof Error ? e.message : "something went wrong");
       setStep("questions");

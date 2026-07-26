@@ -11,6 +11,8 @@ const ALIAS_HOSTS = [
 ];
 
 const nextConfig: NextConfig = {
+  // 0G storage SDK + ethers stay external (native/node internals; loaded lazily)
+  serverExternalPackages: ["@0gfoundation/0g-storage-ts-sdk", "ethers"],
   async redirects() {
     return ALIAS_HOSTS.map((host) => ({
       source: "/:path*",
